@@ -1,4 +1,4 @@
-package com.livinggoodsbackend.livinggoodsbackend.config;
+package com.livinggoodsbackend.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,8 +20,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for development
-            .cors(cors -> cors.disable()) // Disable CORS in Security (we'll handle it in WebMvcConfigurer)
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.disable()) // Disable CORS in Security
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/**", "/uploads/**").permitAll()
                 .anyRequest().authenticated()
@@ -37,10 +37,25 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                    .allowedOriginPatterns("*")  // This allows all origins with credentials
+                    // List specific origins for credentials support
+                    .allowedOrigins(
+                        "http://localhost:3000",
+                        "http://localhost:8080", 
+                        "http://localhost:8081",
+                        "http://localhost:8100",
+                        "capacitor://localhost",
+                        "ionic://localhost"
+                    )
+                    // Use patterns for broader matching
+                    .allowedOriginPatterns(
+                        "http://localhost:*",
+                        "http://192.168.*.*:*",
+                        "capacitor://*",
+                        "ionic://*"
+                    )
                     .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH")
                     .allowedHeaders("*")
-                    .allowCredentials(false);  // Set to false to avoid the conflict
+                    .allowCredentials(true);
             }
         };
     }
