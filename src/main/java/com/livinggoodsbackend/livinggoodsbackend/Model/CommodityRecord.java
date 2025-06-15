@@ -50,6 +50,12 @@ public class CommodityRecord {
     @Column(name = "consumption_period")
     private Integer consumptionPeriod;
     
+    @Column(name = "earliest_expiry_date")
+    private LocalDateTime earliestExpiryDate;
+    
+    @Column(name = "quantity_to_order")
+    private Integer quantityToOrder;
+    
     @Column(name = "record_date")
     private LocalDateTime recordDate;
     

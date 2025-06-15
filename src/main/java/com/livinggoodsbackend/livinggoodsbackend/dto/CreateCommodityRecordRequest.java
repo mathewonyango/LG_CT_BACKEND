@@ -3,6 +3,7 @@ package com.livinggoodsbackend.livinggoodsbackend.dto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Data
 public class CreateCommodityRecordRequest {
@@ -37,4 +38,11 @@ public class CreateCommodityRecordRequest {
     
     @Min(value = 1, message = "Consumption period must be at least 1")
     private Integer consumptionPeriod;
+    
+    @NotNull(message = "Earliest expiry date is required")
+    private LocalDateTime earliestExpiryDate;
+    
+    @NotNull(message = "Quantity to order is required")
+    @Min(value = 0, message = "Quantity to order cannot be negative")
+    private Integer quantityToOrder;
 }
