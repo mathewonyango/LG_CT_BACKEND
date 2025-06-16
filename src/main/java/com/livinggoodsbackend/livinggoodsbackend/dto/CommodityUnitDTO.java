@@ -23,5 +23,7 @@ public class CommodityUnitDTO {
     // private String wardName;
     // private String subCountyName;
     // private String countyName;
+        private Integer stockLevel; // Add this
+
     private Integer totalCHPsCounted; // Should be Integer
 }

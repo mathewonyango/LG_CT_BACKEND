@@ -36,7 +36,7 @@ public class CreateCommodityRecordRequest {
     @Min(value = 0, message = "Closing balance cannot be negative")
     private Integer closingBalance;
     
-    @Min(value = 1, message = "Consumption period must be at least 1")
+    // @Min(value = 1, message = "Consumption period must be at least 1")
     private Integer consumptionPeriod;
     
     @NotNull(message = "Earliest expiry date is required")
@@ -49,6 +49,8 @@ public class CreateCommodityRecordRequest {
     private LocalDateTime stockOutDate;
 
     private LocalDateTime lastRestockDate;
+
+    private Integer createdBy; // Total CHPs counted for the record
     // private Long createdBy; // ID of the user creating the record
 
 }

@@ -14,7 +14,7 @@ public class CreateCommodityUnitRequest {
     private String communityUnitName;
 
     @NotNull(message = "Total CHPs is required")
-    @Min(value = 1, message = "Total CHPs must be at least 1")
+    // @Min(value = 1, message = "Total CHPs must be at least 1")
     private Integer totalChps;
 
     @NotNull(message = "County ID is required")

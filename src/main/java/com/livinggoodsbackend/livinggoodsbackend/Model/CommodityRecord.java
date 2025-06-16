@@ -59,14 +59,12 @@ public class CommodityRecord {
     @Column(name = "record_date")
     private LocalDateTime recordDate;
     
-    @ManyToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
+    // @ManyToOne
+    // @JoinColumn(name = "created_by")
+    // // private User createdBy;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
+    // @Column(name = "created_by")
+    private Integer createdBy;
 }

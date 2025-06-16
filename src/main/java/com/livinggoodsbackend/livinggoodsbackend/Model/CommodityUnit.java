@@ -57,5 +57,6 @@ public class CommodityUnit {
     private User createdBy;
     @Column(name = "total_chps_counted")
     private Integer totalCHPsCounted;  // Change from Long to Integer
+    private Integer createdById; // Add this field for stock level
 
 }

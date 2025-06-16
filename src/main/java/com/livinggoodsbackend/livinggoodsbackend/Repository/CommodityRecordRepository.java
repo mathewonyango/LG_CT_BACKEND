@@ -125,4 +125,21 @@ List<StockOutStat> getStockOutStats();
            "LEFT JOIN FETCH w.subCounty sc " +
            "LEFT JOIN FETCH sc.county")
     List<CommodityRecord> findAllWithLocations();
+
+    @Query("""
+    SELECT cr.communityUnit.id, SUM(cr.stockOnHand)
+    FROM CommodityRecord cr
+    GROUP BY cr.communityUnit.id
+
+""")
+List<Object[]> getStockLevelsGroupedByCommunityUnit();
+
+@Query("""
+    SELECT COALESCE(SUM(cr.stockOnHand), 0)
+    FROM CommodityRecord cr
+    WHERE cr.communityUnit.id = :communityUnitId
+""")
+Integer getTotalStockByCommunityUnitId(@Param("communityUnitId") Long communityUnitId);
+
+
 }

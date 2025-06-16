@@ -78,7 +78,7 @@ public class CommodityRecordService {
         record.setRecordDate(LocalDateTime.now());
         record.setLastRestockDate(request.getLastRestockDate());
         record.setStockOutDate(request.getStockOutDate());
-        // record.setCreatedBy(request.getCreatedBy()); // Assuming you have a way to set the user who created the record
+        record.setCreatedBy(request.getCreatedBy()); // Assuming you have a way to set the user who created the record
         // record.setUpdatedAt(LocalDateTime.now());
 
         CommodityRecord saved = commodityRecordRepository.save(record);
@@ -118,7 +118,7 @@ public class CommodityRecordService {
         history.setNewBalance(record.getClosingBalance());
         // history.setChangeType(record.changeType);
         history.setRecordDate(LocalDateTime.now());
-        history.setRecordedBy(record.getCreatedBy());
+        // history.setRecordedBy(record.getCr);
         
         stockHistoryRepository.save(history);
     }
@@ -159,7 +159,8 @@ public class CommodityRecordService {
         dto.setEarliestExpiryDate(record.getEarliestExpiryDate());  // Add this line
         dto.setQuantityToOrder(record.getQuantityToOrder());        // Add this line
         dto.setRecordDate(record.getRecordDate());
-        dto.setCreatedByUsername(record.getCreatedBy() != null ? record.getCreatedBy().getUsername() : null);
+        dto.setCreatedBy(record.getCreatedBy());
+        // dto.setCreatedByUsername(record.getCreatedBy() != null ? record.getCreatedBy().getUsername() : null);
         
         // Add location hierarchy information
         CommodityUnit communityUnit = record.getCommunityUnit();

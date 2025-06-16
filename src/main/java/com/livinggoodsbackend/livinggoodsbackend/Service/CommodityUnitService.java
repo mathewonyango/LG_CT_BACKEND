@@ -13,6 +13,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Model.County;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Facility;
 import com.livinggoodsbackend.livinggoodsbackend.Model.SubCounty;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Ward;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityRecordRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityUnitRepository;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CommodityUnitDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateCommodityUnitRequest;
@@ -41,6 +42,9 @@ public class CommodityUnitService {
     
     @Autowired
     private FacilityRepository facilityRepository;
+    @Autowired
+    private CommodityRecordRepository commodityRecordRepository;
+
 
 
     private CommodityUnitDTO convertToDTO(CommodityUnit unit) {
@@ -55,6 +59,9 @@ public class CommodityUnitService {
         dto.setLinkFacilityId(unit.getLinkFacility() != null ? unit.getLinkFacility().getId() : null);
         dto.setCreatedById(unit.getCreatedBy() != null ? unit.getCreatedBy().getId() : null);
         dto.setTotalCHPsCounted(unit.getTotalCHPsCounted());
+          // Fetch and set stock level
+    Integer stockLevel = commodityRecordRepository.getTotalStockByCommunityUnitId(unit.getId());
+    dto.setStockLevel(stockLevel);
         dto.setCreatedAt(unit.getCreatedAt());
         return dto;
     }
@@ -97,6 +104,8 @@ public class CommodityUnitService {
         CommodityUnit.setLinkFacility(facility);
         CommodityUnit.setCreatedAt(LocalDateTime.now());
         CommodityUnit.setTotalCHPsCounted(request.getTotalCHPsCounted());
+        
+
         CommodityUnit saved = communityUnitRepository.save(CommodityUnit);
         return convertToDTO(saved);
     }
