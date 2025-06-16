@@ -55,4 +55,7 @@ public class CommodityUnit {
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;
+    @Column(name = "total_chps_counted")
+    private Integer totalCHPsCounted;  // Change from Long to Integer
+
 }

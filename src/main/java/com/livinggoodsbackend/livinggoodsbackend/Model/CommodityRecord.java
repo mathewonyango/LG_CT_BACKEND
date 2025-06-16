@@ -65,4 +65,8 @@ public class CommodityRecord {
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
 }

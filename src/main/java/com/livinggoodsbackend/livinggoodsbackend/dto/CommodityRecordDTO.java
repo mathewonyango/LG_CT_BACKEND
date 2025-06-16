@@ -30,4 +30,6 @@ public class CommodityRecordDTO {
     private Long wardId;
     private Long facilityId;
     private String facilityName;
+    private LocalDateTime earliestExpiryDate;
+    private Integer quantityToOrder;
 }

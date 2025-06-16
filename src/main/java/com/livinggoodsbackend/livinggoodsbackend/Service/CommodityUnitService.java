@@ -42,6 +42,7 @@ public class CommodityUnitService {
     @Autowired
     private FacilityRepository facilityRepository;
 
+
     private CommodityUnitDTO convertToDTO(CommodityUnit unit) {
         CommodityUnitDTO dto = new CommodityUnitDTO();
         dto.setId(unit.getId());
@@ -53,6 +54,7 @@ public class CommodityUnitService {
         dto.setWardId(unit.getWard() != null ? unit.getWard().getId() : null);
         dto.setLinkFacilityId(unit.getLinkFacility() != null ? unit.getLinkFacility().getId() : null);
         dto.setCreatedById(unit.getCreatedBy() != null ? unit.getCreatedBy().getId() : null);
+        dto.setTotalCHPsCounted(unit.getTotalCHPsCounted());
         dto.setCreatedAt(unit.getCreatedAt());
         return dto;
     }
@@ -94,7 +96,7 @@ public class CommodityUnitService {
         CommodityUnit.setSubCounty(subCounty);
         CommodityUnit.setLinkFacility(facility);
         CommodityUnit.setCreatedAt(LocalDateTime.now());
-
+        CommodityUnit.setTotalCHPsCounted(request.getTotalCHPsCounted());
         CommodityUnit saved = communityUnitRepository.save(CommodityUnit);
         return convertToDTO(saved);
     }

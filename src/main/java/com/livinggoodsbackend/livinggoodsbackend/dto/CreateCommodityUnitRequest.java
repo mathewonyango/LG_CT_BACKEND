@@ -29,4 +29,6 @@ public class CreateCommodityUnitRequest {
     private Long linkFacilityId;
     
     private Long createdBy;
+    @NotNull(message = "Total CHPs counted is required")
+    private Integer totalCHPsCounted;
 }

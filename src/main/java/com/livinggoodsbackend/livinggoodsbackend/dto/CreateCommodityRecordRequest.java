@@ -45,4 +45,10 @@ public class CreateCommodityRecordRequest {
     @NotNull(message = "Quantity to order is required")
     @Min(value = 0, message = "Quantity to order cannot be negative")
     private Integer quantityToOrder;
+
+    private LocalDateTime stockOutDate;
+
+    private LocalDateTime lastRestockDate;
+    // private Long createdBy; // ID of the user creating the record
+
 }

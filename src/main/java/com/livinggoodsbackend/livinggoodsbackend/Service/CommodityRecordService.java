@@ -72,8 +72,14 @@ public class CommodityRecordService {
         record.setQuantityConsumed(request.getQuantityConsumed());
         record.setClosingBalance(request.getClosingBalance());
         record.setConsumptionPeriod(request.getConsumptionPeriod());
+        record.setEarliestExpiryDate(request.getEarliestExpiryDate()); // Add this line
+        record.setQuantityToOrder(request.getQuantityToOrder());        // Add this line
         record.setCreatedAt(LocalDateTime.now());
         record.setRecordDate(LocalDateTime.now());
+        record.setLastRestockDate(request.getLastRestockDate());
+        record.setStockOutDate(request.getStockOutDate());
+        // record.setCreatedBy(request.getCreatedBy()); // Assuming you have a way to set the user who created the record
+        // record.setUpdatedAt(LocalDateTime.now());
 
         CommodityRecord saved = commodityRecordRepository.save(record);
         
@@ -150,6 +156,8 @@ public class CommodityRecordService {
         dto.setLastRestockDate(record.getLastRestockDate());
         dto.setStockOutDate(record.getStockOutDate());
         dto.setConsumptionPeriod(record.getConsumptionPeriod());
+        dto.setEarliestExpiryDate(record.getEarliestExpiryDate());  // Add this line
+        dto.setQuantityToOrder(record.getQuantityToOrder());        // Add this line
         dto.setRecordDate(record.getRecordDate());
         dto.setCreatedByUsername(record.getCreatedBy() != null ? record.getCreatedBy().getUsername() : null);
         
