@@ -17,13 +17,13 @@ public class CommodityUnitDTO {
     private Long subCountyId;
     private Long wardId;
     private Long linkFacilityId;
-    private Long createdById;
+    private Integer createdBy;
     // private String createdByUsername;
     private LocalDateTime createdAt;
     // private String wardName;
     // private String subCountyName;
     // private String countyName;
-        private Integer stockLevel; // Add this
+    private Integer stockLevel; // Add this
 
     private Integer totalCHPsCounted; // Should be Integer
 }

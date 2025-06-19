@@ -53,10 +53,17 @@ public class CommodityUnit {
     private LocalDateTime createdAt;
     
     @ManyToOne
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by", insertable = false, updatable = false)
     private User createdBy;
+    private Integer createdById;
+
     @Column(name = "total_chps_counted")
     private Integer totalCHPsCounted;  // Change from Long to Integer
-    private Integer createdById; // Add this field for stock level
+
+    public void setCreatedById(Integer createdById) {
+    this.createdById = createdById;
+
+  
+}
 
 }

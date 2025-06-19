@@ -12,6 +12,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Model.CommodityUnit;
 import com.livinggoodsbackend.livinggoodsbackend.Model.County;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Facility;
 import com.livinggoodsbackend.livinggoodsbackend.Model.SubCounty;
+import com.livinggoodsbackend.livinggoodsbackend.Model.User;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Ward;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityRecordRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityUnitRepository;
@@ -21,6 +22,7 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.CommodityUnitDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateCommodityUnitRequest;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CountyRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.SubCountyRepository;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.WardRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.FacilityRepository;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
@@ -45,6 +47,8 @@ public class CommodityUnitService {
     @Autowired
     private CommodityRecordRepository commodityRecordRepository;
 
+    private UserRepository userRepository;
+
 
 
     private CommodityUnitDTO convertToDTO(CommodityUnit unit) {
@@ -57,7 +61,7 @@ public class CommodityUnitService {
         dto.setSubCountyId(unit.getSubCounty() != null ? unit.getSubCounty().getId() : null);
         dto.setWardId(unit.getWard() != null ? unit.getWard().getId() : null);
         dto.setLinkFacilityId(unit.getLinkFacility() != null ? unit.getLinkFacility().getId() : null);
-        dto.setCreatedById(unit.getCreatedBy() != null ? unit.getCreatedBy().getId() : null);
+        dto.setCreatedBy(unit.getCreatedById());
         dto.setTotalCHPsCounted(unit.getTotalCHPsCounted());
           // Fetch and set stock level
     Integer stockLevel = commodityRecordRepository.getTotalStockByCommunityUnitId(unit.getId());
@@ -79,6 +83,7 @@ public class CommodityUnitService {
     }
 
     public CommodityUnitDTO createCommodityUnit(CreateCommodityUnitRequest request) {
+
         County county = countyRepository.findById(request.getCountyId())
             .orElseThrow(() -> new ResourceNotFoundException("County not found"));
             
@@ -104,7 +109,9 @@ public class CommodityUnitService {
         CommodityUnit.setLinkFacility(facility);
         CommodityUnit.setCreatedAt(LocalDateTime.now());
         CommodityUnit.setTotalCHPsCounted(request.getTotalCHPsCounted());
-        
+        CommodityUnit.setCreatedById(request.getCreatedBy() != null ? request.getCreatedBy() : null);
+        // CommodityUnit.setCreatedBy(userRepository.findById(0L)
+        //     .orElseThrow(() -> new ResourceNotFoundException("User not found")));
 
         CommodityUnit saved = communityUnitRepository.save(CommodityUnit);
         return convertToDTO(saved);
