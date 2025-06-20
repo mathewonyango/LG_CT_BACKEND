@@ -63,7 +63,7 @@ public class DashboardService {
 
         // Stock metrics
         stats.setTotalStockOuts(commodityRecordRepository.countCommunityUnitsWithStockOut());
-        stats.setLowStockItems(commodityRecordRepository.countLowStockItems(10)); // threshold of 10
+        stats.setLowStockItems(commodityRecordRepository.countLowStockItems(0)); // threshold of 10
 
         return stats;
     }

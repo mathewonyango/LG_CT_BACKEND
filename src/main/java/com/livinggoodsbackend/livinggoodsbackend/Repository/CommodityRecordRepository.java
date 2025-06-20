@@ -78,7 +78,7 @@ List<StockOutStat> getStockOutStats();
     @Query(value = """
         SELECT COUNT(*) 
         FROM commodity_records cr
-        WHERE cr.stock_on_hand <= :threshold
+        WHERE cr.closing_balance <= 0 OR cr.closing_balance IS NULL
         """, nativeQuery = true)
     Long countLowStockItems(@Param("threshold") Integer threshold);
     
