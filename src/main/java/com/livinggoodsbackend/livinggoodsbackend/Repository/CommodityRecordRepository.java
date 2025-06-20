@@ -47,7 +47,7 @@ public interface CommodityRecordRepository extends JpaRepository<CommodityRecord
     FROM commodity_records cr
     JOIN community_units cu ON cr.community_unit_id = cu.id
     JOIN commodities c ON cr.commodity_id = c.id
-    WHERE cr.stock_on_hand < 5 OR cr.stock_on_hand IS NULL
+    WHERE cr.closing_balance <= 0 OR cr.closing_balance IS NULL
     GROUP BY cu.id, cu.community_unit_name
 """, nativeQuery = true)
 List<StockOutStat> getStockOutStats();
