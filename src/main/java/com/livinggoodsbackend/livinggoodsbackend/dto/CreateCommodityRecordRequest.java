@@ -33,7 +33,7 @@ public class CreateCommodityRecordRequest {
     private Integer quantityConsumed = 0;
     
     @NotNull(message = "Closing balance is required")
-    @Min(value = 0, message = "Closing balance cannot be negative")
+    // @Min(value = 0, message = "Closing balance cannot be negative")
     private Integer closingBalance;
     
     // @Min(value = 1, message = "Consumption period must be at least 1")

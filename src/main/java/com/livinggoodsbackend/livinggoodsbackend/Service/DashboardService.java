@@ -87,6 +87,6 @@ public class DashboardService {
     }
 
     public Long getLowStockCount(Integer threshold) {
-        return commodityRecordRepository.countLowStockItems(threshold != null ? threshold : 10);
+        return commodityRecordRepository.countLowStockItems(threshold != null ? threshold : 0);
     }
 }
