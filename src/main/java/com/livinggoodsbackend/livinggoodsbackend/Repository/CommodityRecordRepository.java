@@ -71,7 +71,7 @@ List<StockOutStat> getStockOutStats();
     @Query(value = """
         SELECT COUNT(DISTINCT cr.community_unit_id) 
         FROM commodity_records cr
-        WHERE cr.stock_on_hand = 0
+        WHERE cr.closing_balance  <= 0
         """, nativeQuery = true)
     Long countCommunityUnitsWithStockOut();
     
