@@ -49,17 +49,15 @@ public class CommodityUnitService {
 
     private UserRepository userRepository;
 
-
-
     private CommodityUnitDTO convertToDTO(CommodityUnit unit) {
         CommodityUnitDTO dto = new CommodityUnitDTO();
         dto.setId(unit.getId());
         dto.setChaName(unit.getChaName());
         dto.setCommunityUnitName(unit.getCommunityUnitName());
         dto.setTotalChps(unit.getTotalChps());
-        dto.setCountyId(unit.getCounty() != null ? unit.getCounty().getId() : null);
+        dto.setCountyName(unit.getCounty() != null ? unit.getCounty().getName() : null);
         dto.setSubCountyId(unit.getSubCounty() != null ? unit.getSubCounty().getId() : null);
-        dto.setWardId(unit.getWard() != null ? unit.getWard().getId() : null);
+        dto.setWardName(unit.getWard() != null ? unit.getWard().getName() : null);
         dto.setLinkFacilityId(unit.getLinkFacility() != null ? unit.getLinkFacility().getId() : null);
         dto.setCreatedBy(unit.getCreatedById());
         dto.setTotalCHPsCounted(unit.getTotalCHPsCounted());

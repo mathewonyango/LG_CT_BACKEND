@@ -13,9 +13,9 @@ public class CommodityUnitDTO {
     private String chaName;
     private String communityUnitName;
     private Integer totalChps;
-    private Long countyId;
+    private String countyName;
     private Long subCountyId;
-    private Long wardId;
+    private String wardName;
     private Long linkFacilityId;
     private Integer createdBy;
     // private String createdByUsername;
