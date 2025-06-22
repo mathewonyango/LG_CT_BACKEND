@@ -22,6 +22,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityRecordRepos
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityStockHistoryRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityUnitRepository;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateCommodityRecordRequest;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CommodityRecordDTO;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
@@ -42,12 +43,30 @@ public class CommodityRecordService {
     
     @Autowired
     private CommodityStockHistoryRepository stockHistoryRepository;
+    @Autowired
+    private UserRepository userRepository;
+
     
-    public List<CommodityRecordDTO> getAllRecords() {
-        return commodityRecordRepository.findAllWithLocations().stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
-    }
+   public List<CommodityRecordDTO> getAllRecords() {
+    return commodityRecordRepository.findAllWithLocations().stream()
+        .map(record -> {
+            CommodityRecordDTO dto = convertToDTO(record);
+
+            // Safely get createdById from community unit
+            Integer creatorId = record.getCommunityUnit() != null ? record.getCommunityUnit().getCreatedById() : null;
+            dto.setCreatedBy(creatorId);
+
+            // Set the username from the user table using createdById
+            if (creatorId != null) {
+                userRepository.findById(Long.valueOf(creatorId)).ifPresent(user ->
+                    dto.setCreatedByUsername(user.getUsername())
+                );
+            }
+
+            return dto;
+        })
+        .collect(Collectors.toList());
+}
     
     public Optional<CommodityRecordDTO> getRecordById(Long id) {
         return commodityRecordRepository.findById(id)
@@ -139,57 +158,64 @@ public class CommodityRecordService {
         return commodityRecordRepository.findByRecordDateBetween(start, end);
     }
     
-    private CommodityRecordDTO convertToDTO(CommodityRecord record) {
-        CommodityRecordDTO dto = new CommodityRecordDTO();
-        dto.setId(record.getId());
-        dto.setCommunityUnitId(record.getCommunityUnit().getId());
-        dto.setCommunityUnitName(record.getCommunityUnit().getCommunityUnitName()); // Changed from getChaName()
-        dto.setCommodityId(record.getCommodity().getId());
-        dto.setCommodityName(record.getCommodity().getName());
-        dto.setQuantityExpired(record.getQuantityExpired());
-        dto.setQuantityDamaged(record.getQuantityDamaged());
-        dto.setStockOnHand(record.getStockOnHand());
-        dto.setQuantityIssued(record.getQuantityIssued());
-        dto.setExcessQuantityReturned(record.getExcessQuantityReturned());
-        dto.setQuantityConsumed(record.getQuantityConsumed());
-        dto.setClosingBalance(record.getClosingBalance());
-        dto.setLastRestockDate(record.getLastRestockDate());
-        dto.setStockOutDate(record.getStockOutDate());
-        dto.setConsumptionPeriod(record.getConsumptionPeriod());
-        dto.setEarliestExpiryDate(record.getEarliestExpiryDate());  // Add this line
-        dto.setQuantityToOrder(record.getQuantityToOrder());        // Add this line
-        dto.setRecordDate(record.getRecordDate());
-        dto.setCreatedBy(record.getCreatedBy());
-        // dto.setCreatedByUsername(record.getCreatedBy() != null ? record.getCreatedBy().getUsername() : null);
-        
-        // Add location hierarchy information
-        CommodityUnit communityUnit = record.getCommunityUnit();
-        if (communityUnit != null) {
-            Facility facility = communityUnit.getLinkFacility();
-            if (facility != null) {
-                dto.setFacilityId(facility.getId());    // Add facility ID
-                dto.setFacilityName(facility.getName()); // Add facility name
-                
-                Ward ward = facility.getWard();
-                if (ward != null) {
-                    dto.setWardId(ward.getId());
-                    dto.setWardName(ward.getName());
-                    
-                    SubCounty subCounty = ward.getSubCounty();
-                    if (subCounty != null) {
-                        dto.setSubCountyId(subCounty.getId());
-                        dto.setSubCountyName(subCounty.getName());
-                        
-                        County county = subCounty.getCounty();
-                        if (county != null) {
-                            dto.setCountyId(county.getId());
-                            dto.setCountyName(county.getName());
-                        }
-                    }
+   
+
+private CommodityRecordDTO convertToDTO(CommodityRecord record) {
+    CommodityRecordDTO dto = new CommodityRecordDTO();
+    dto.setId(record.getId());
+    dto.setCommunityUnitId(record.getCommunityUnit().getId());
+    dto.setCommunityUnitName(record.getCommunityUnit().getCommunityUnitName());
+    dto.setCommodityId(record.getCommodity().getId());
+    dto.setCommodityName(record.getCommodity().getName());
+    dto.setQuantityExpired(record.getQuantityExpired());
+    dto.setQuantityDamaged(record.getQuantityDamaged());
+    dto.setStockOnHand(record.getStockOnHand());
+    dto.setQuantityIssued(record.getQuantityIssued());
+    dto.setExcessQuantityReturned(record.getExcessQuantityReturned());
+    dto.setQuantityConsumed(record.getQuantityConsumed());
+    dto.setClosingBalance(record.getClosingBalance());
+    dto.setLastRestockDate(record.getLastRestockDate());
+    dto.setStockOutDate(record.getStockOutDate());
+    dto.setConsumptionPeriod(record.getConsumptionPeriod());
+    dto.setEarliestExpiryDate(record.getEarliestExpiryDate());
+    dto.setQuantityToOrder(record.getQuantityToOrder());
+    dto.setRecordDate(record.getRecordDate());
+    dto.setCreatedBy(record.getCreatedBy());
+
+    // ✅ Fetch createdByUsername using created_by_id from communityUnit
+    CommodityUnit cu = record.getCommunityUnit();
+    if (cu != null && cu.getCreatedById() != null) {
+        userRepository.findById(Long.valueOf(cu.getCreatedById())).ifPresent(user -> {
+            dto.setCreatedByUsername(user.getUsername());
+        });
+    }
+
+    // ✅ Add location hierarchy info
+    Facility facility = cu.getLinkFacility();
+    if (facility != null) {
+        dto.setFacilityId(facility.getId());
+        dto.setFacilityName(facility.getName());
+
+        Ward ward = facility.getWard();
+        if (ward != null) {
+            dto.setWardId(ward.getId());
+            dto.setWardName(ward.getName());
+
+            SubCounty subCounty = ward.getSubCounty();
+            if (subCounty != null) {
+                dto.setSubCountyId(subCounty.getId());
+                dto.setSubCountyName(subCounty.getName());
+
+                County county = subCounty.getCounty();
+                if (county != null) {
+                    dto.setCountyId(county.getId());
+                    dto.setCountyName(county.getName());
                 }
             }
         }
-        
-        return dto;
     }
+
+    return dto;
+}
+
 }
