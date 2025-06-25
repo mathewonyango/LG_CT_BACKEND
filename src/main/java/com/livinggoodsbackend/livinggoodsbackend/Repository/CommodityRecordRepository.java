@@ -2,7 +2,6 @@ package com.livinggoodsbackend.livinggoodsbackend.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-// import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,7 +16,7 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.ConsumptionProjection;
 
 @Repository
 public interface CommodityRecordRepository extends JpaRepository<CommodityRecord, Long> {
-    // Basic CRUD operations using UUID instead of Long
+    // Basic CRUD operations
     List<CommodityRecord> findByCommunityUnitId(Long communityUnitId);
     List<CommodityRecord> findByCommodityId(Long commodityId);
     List<CommodityRecord> findByCommunityUnitIdAndCommodityId(Long communityUnitId, Long commodityId);
@@ -25,7 +24,7 @@ public interface CommodityRecordRepository extends JpaRepository<CommodityRecord
     List<CommodityRecord> findByRecordDateBetween(LocalDateTime start, LocalDateTime end);
     List<CommodityRecord> findByStockOnHandLessThan(Integer threshold);
     
-    // Fixed JPQL query for monthly consumption stats
+    // JPQL query for monthly consumption stats (PostgreSQL compatible)
     @Query("""
         SELECT NEW com.livinggoodsbackend.livinggoodsbackend.dto.DashboardStats$ConsumptionStat(
             cu.communityUnitName, 
@@ -39,50 +38,50 @@ public interface CommodityRecordRepository extends JpaRepository<CommodityRecord
     """)
     List<ConsumptionStat> getMonthlyConsumptionStats(@Param("startDate") LocalDateTime startDate);
 
-    // Fixed native query for stock out stats
-   @Query(value = """
-    SELECT 
-        cu.community_unit_name as communityUnitName,
-        GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as commodityNames
-    FROM commodity_records cr
-    JOIN community_units cu ON cr.community_unit_id = cu.id
-    JOIN commodities c ON cr.commodity_id = c.id
-    WHERE cr.closing_balance <= 0 OR cr.closing_balance IS NULL
-    GROUP BY cu.id, cu.community_unit_name
-""", nativeQuery = true)
-List<StockOutStat> getStockOutStats();
+    // PostgreSQL compatible native query for stock out stats
+    @Query(value = """
+        SELECT 
+            cu.community_unit_name as communityUnitName,
+            STRING_AGG(DISTINCT c.name, ', ') as commodityNames
+        FROM commodity_records cr
+        JOIN community_units cu ON cr.community_unit_id = cu.id
+        JOIN commodities c ON cr.commodity_id = c.id
+        WHERE cr.closing_balance <= 0 OR cr.closing_balance IS NULL
+        GROUP BY cu.id, cu.community_unit_name
+    """, nativeQuery = true)
+    List<StockOutStat> getStockOutStats();
 
-
-    // Removed duplicate method - using projection interface instead
+    // PostgreSQL compatible top consumption stats
     @Query(value = """
         SELECT 
             cu.community_unit_name as communityUnitName,
             COALESCE(SUM(cr.quantity_consumed), 0) as quantityConsumed
         FROM commodity_records cr
         JOIN community_units cu ON cr.community_unit_id = cu.id
-        WHERE cr.record_date >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+        WHERE cr.record_date >= CURRENT_DATE - INTERVAL '30 days'
         GROUP BY cu.id, cu.community_unit_name
         ORDER BY SUM(cr.quantity_consumed) DESC
         LIMIT 3
         """, nativeQuery = true)
     List<ConsumptionProjection> getTopConsumptionStats();
     
-    // Additional useful queries for dashboard
+    // Count community units with stock out
     @Query(value = """
         SELECT COUNT(DISTINCT cr.community_unit_id) 
         FROM commodity_records cr
-        WHERE cr.closing_balance  <= 0
+        WHERE cr.closing_balance <= 0
         """, nativeQuery = true)
     Long countCommunityUnitsWithStockOut();
     
+    // Count low stock items - Fixed to use the parameter
     @Query(value = """
         SELECT COUNT(*) 
         FROM commodity_records cr
-        WHERE cr.closing_balance <= 0 OR cr.closing_balance IS NULL
+        WHERE cr.closing_balance <= :threshold OR cr.closing_balance IS NULL
         """, nativeQuery = true)
     Long countLowStockItems(@Param("threshold") Integer threshold);
     
-    // Get recent records for a community unit
+    // Get recent records for a community unit (JPQL - database agnostic)
     @Query("""
         SELECT cr FROM CommodityRecord cr
         WHERE cr.communityUnit.id = :communityUnitId
@@ -90,19 +89,19 @@ List<StockOutStat> getStockOutStats();
         """)
     List<CommodityRecord> findRecentRecordsByCommunityUnit(@Param("communityUnitId") Long communityUnitId);
     
-    // Get consumption trends
+    // Get consumption trends - PostgreSQL compatible
     @Query(value = """
         SELECT 
             DATE(cr.record_date) as recordDate,
             SUM(cr.quantity_consumed) as totalConsumed
         FROM commodity_records cr
-        WHERE cr.record_date >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+        WHERE cr.record_date >= CURRENT_DATE - INTERVAL '30 days'
         GROUP BY DATE(cr.record_date)
         ORDER BY DATE(cr.record_date)
         """, nativeQuery = true)
     List<Object[]> getConsumptionTrends();
     
-    // Find expired commodities
+    // Find expired commodities (JPQL - database agnostic)
     @Query("""
         SELECT cr FROM CommodityRecord cr
         WHERE cr.quantityExpired > 0
@@ -110,7 +109,7 @@ List<StockOutStat> getStockOutStats();
         """)
     List<CommodityRecord> findRecordsWithExpiredItems();
     
-    // Find damaged commodities
+    // Find damaged commodities (JPQL - database agnostic)
     @Query("""
         SELECT cr FROM CommodityRecord cr
         WHERE cr.quantityDamaged > 0
@@ -118,28 +117,28 @@ List<StockOutStat> getStockOutStats();
         """)
     List<CommodityRecord> findRecordsWithDamagedItems();
 
+    // Fetch with locations (JPQL - database agnostic)
     @Query("SELECT cr FROM CommodityRecord cr " +
            "LEFT JOIN FETCH cr.communityUnit cu " +
-           "LEFT JOIN FETCH cu.linkFacility f " +  // Changed from facility to linkFacility
+           "LEFT JOIN FETCH cu.linkFacility f " +
            "LEFT JOIN FETCH f.ward w " +
            "LEFT JOIN FETCH w.subCounty sc " +
            "LEFT JOIN FETCH sc.county")
     List<CommodityRecord> findAllWithLocations();
 
+    // Get stock levels grouped by community unit (JPQL - database agnostic)
     @Query("""
-    SELECT cr.communityUnit.id, SUM(cr.stockOnHand)
-    FROM CommodityRecord cr
-    GROUP BY cr.communityUnit.id
+        SELECT cr.communityUnit.id, SUM(cr.stockOnHand)
+        FROM CommodityRecord cr
+        GROUP BY cr.communityUnit.id
+    """)
+    List<Object[]> getStockLevelsGroupedByCommunityUnit();
 
-""")
-List<Object[]> getStockLevelsGroupedByCommunityUnit();
-
-@Query("""
-    SELECT COALESCE(SUM(cr.stockOnHand), 0)
-    FROM CommodityRecord cr
-    WHERE cr.communityUnit.id = :communityUnitId
-""")
-Integer getTotalStockByCommunityUnitId(@Param("communityUnitId") Long communityUnitId);
-
-
+    // Get total stock by community unit (JPQL - database agnostic)
+    @Query("""
+        SELECT COALESCE(SUM(cr.stockOnHand), 0)
+        FROM CommodityRecord cr
+        WHERE cr.communityUnit.id = :communityUnitId
+    """)
+    Integer getTotalStockByCommunityUnitId(@Param("communityUnitId") Long communityUnitId);
 }
