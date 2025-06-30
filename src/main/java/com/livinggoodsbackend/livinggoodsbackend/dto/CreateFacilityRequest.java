@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class CreateFacilityRequest {
     @NotBlank(message = "Facility name is required")
@@ -15,5 +17,5 @@ public class CreateFacilityRequest {
     private String type;
     
     @NotNull(message = "Ward ID is required")
-    private Long wardId;
+    private List<Long> wardIds;
 }

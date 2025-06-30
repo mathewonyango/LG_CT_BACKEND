@@ -23,22 +23,26 @@ import jakarta.transaction.Transactional;
 @Service
 @Transactional
 public class FacilityService {
-    
+
     @Autowired
     private FacilityRepository facilityRepository;
-    
+
     @Autowired
     private WardRepository wardRepository;
 
     private FacilityDTO convertToDTO(Facility facility) {
         FacilityDTO dto = new FacilityDTO();
         dto.setName(facility.getName());
-        // dto.setFacilityCode(facility.getFacilityCode());
         dto.setType(facility.getType());
-        
-        if (facility.getWard() != null) {
-            dto.setWardId(facility.getWard().getId());
-        }
+        // dto.setFacilityCode(facility.getFacilityCode());
+        // Set ward IDs as a list
+        if (facility.getWards() != null) {
+            dto.setWardIds(
+                facility.getWards().stream()
+                    .map(Ward::getId)
+                    .collect(Collectors.toList())
+            );
+        } 
         return dto;
     }
 
@@ -47,47 +51,46 @@ public class FacilityService {
             .map(this::convertToDTO)
             .collect(Collectors.toList());
     }
-    
+
     public Optional<FacilityDTO> getFacilityById(Long id) {
         return facilityRepository.findById(id)
             .map(this::convertToDTO);
     }
-    
+
     public FacilityDTO createFacility(CreateFacilityRequest request) {
-        // Check for duplicate facility code
-        
+        // Fetch wards by IDs
+        List<Ward> wards = wardRepository.findAllById(request.getWardIds());
+        if (wards.size() != request.getWardIds().size()) {
+            throw new ResourceNotFoundException("One or more wards not found for the provided IDs");
+        }
 
-        // Validate ward exists
-        Ward ward = wardRepository.findById(request.getWardId())
-            .orElseThrow(() -> new ResourceNotFoundException("Ward not found with id: " + request.getWardId()));
-
-        // Create new facility
         Facility facility = new Facility();
         facility.setName(request.getName());
         facility.setType(request.getType());
-        facility.setWard(ward);
+        // facility.setFacilityCode(request.getFacilityCode());
+        facility.setWards(wards);
 
-        // Save and convert to DTO
         Facility saved = facilityRepository.save(facility);
         return convertToDTO(saved);
     }
-    
+
     public FacilityDTO updateFacility(Long id, CreateFacilityRequest request) {
         Facility facility = facilityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Facility not found with id: " + id));
-        
-    
-        Ward ward = wardRepository.findById(request.getWardId())
-            .orElseThrow(() -> new ResourceNotFoundException("Ward not found with id: " + request.getWardId()));
+
+        List<Ward> wards = wardRepository.findAllById(request.getWardIds());
+        if (wards.size() != request.getWardIds().size()) {
+            throw new ResourceNotFoundException("One or more wards not found for the provided IDs");
+        }
 
         facility.setName(request.getName());
-        // facility.setFacilityCode(request.getFacilityCode());
         facility.setType(request.getType());
-        facility.setWard(ward);
-        
+        // facility.setFacilityCode(request.getFacilityCode());
+        facility.setWards(wards);
+
         return convertToDTO(facilityRepository.save(facility));
     }
-    
+
     public void deleteFacility(Long id) {
         if (!facilityRepository.existsById(id)) {
             throw new ResourceNotFoundException("Facility not found with id: " + id);
@@ -98,16 +101,17 @@ public class FacilityService {
             throw new ResourceInUseException("Facility is in use and cannot be deleted");
         }
     }
-    
+
     public List<FacilityDTO> getFacilitiesByWard(Long wardId) {
         if (!wardRepository.existsById(wardId)) {
             throw new ResourceNotFoundException("Ward not found with id: " + wardId);
         }
-        return facilityRepository.findByWardId(wardId).stream()
+        return facilityRepository.findAll().stream()
+            .filter(facility -> facility.getWards() != null && facility.getWards().stream().anyMatch(w -> w.getId().equals(wardId)))
             .map(this::convertToDTO)
             .collect(Collectors.toList());
     }
-    
+
     public List<FacilityDTO> getFacilitiesByType(String type) {
         return facilityRepository.findByType(type).stream()
             .map(this::convertToDTO)

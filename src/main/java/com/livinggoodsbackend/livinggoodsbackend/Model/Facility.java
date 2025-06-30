@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -13,6 +15,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -38,4 +43,12 @@ public class Facility {
     @ManyToOne
     @JoinColumn(name = "ward_id")
     private Ward ward;
+
+    @ManyToMany
+    @JoinTable(
+        name = "facility_wards",
+        joinColumns = @JoinColumn(name = "facility_id"),
+        inverseJoinColumns = @JoinColumn(name = "ward_id")
+    )
+    private List<Ward> wards = new ArrayList<>();
 }
