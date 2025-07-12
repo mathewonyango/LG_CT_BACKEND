@@ -4,6 +4,8 @@ public enum Role {
     ADMIN,
     USER,
     MANAGER,
-    GUEST
+    GUEST,
+    CHA,
+    CHP
 
 }

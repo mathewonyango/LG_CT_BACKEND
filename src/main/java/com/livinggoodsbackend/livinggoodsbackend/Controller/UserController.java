@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.management.relation.Role;
+// import javax.management.relation.Role;
 // import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +25,12 @@ import com.livinggoodsbackend.livinggoodsbackend.Service.UserService;
 
 import com.livinggoodsbackend.livinggoodsbackend.dto.ApiResponse;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateUserRequest;
+import com.livinggoodsbackend.livinggoodsbackend.dto.MappingRequestDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.MappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.UpdateUserRequest;
+import com.livinggoodsbackend.livinggoodsbackend.dto.UserResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
+import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 
 @RestController
 @RequestMapping("/api/users")
@@ -73,42 +77,7 @@ public class UserController {
             })
             .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse(false, "User not found", null)));
-    }
-
-    // Create user
-//     @PostMapping
-// public ResponseEntity<?> createUser(@RequestBody User user) {
-//     try {
-//         // Basic validation
-//         if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
-//             return ResponseEntity
-//                 .badRequest()
-//                 .body(new ApiResponse(false, "Username is required"));
-//         }
-        
-//         if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
-//             return ResponseEntity
-//                 .badRequest()
-//                 .body(new ApiResponse(false, "Email is required"));
-//         }
-
-//         User createdUser = userService.createUser(user);
-//         return ResponseEntity
-//             .status(HttpStatus.CREATED)
-//             .body(new ApiResponse(true, "User created successfully", createdUser));
-            
-//     } catch (IllegalArgumentException e) {
-//         // Handle duplicate username/email
-//         return ResponseEntity
-//             .badRequest()
-//             .body(new ApiResponse(false, e.getMessage()));
-//     } catch (Exception e) {
-//         return ResponseEntity
-//             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//             .body(new ApiResponse(false, "Error creating user: " + e.getMessage()));
-//     }
-// }
-    
+    } 
     // Update user
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
@@ -160,5 +129,23 @@ public class UserController {
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse(false, e.getMessage()));
         }
+    }
+
+    @GetMapping("/chas")
+    public List<UserResponseDTO> getAllCHAs() {
+        return userService.getUsersByRole(Role.CHA);
+    }
+
+    @GetMapping("/chps")
+    public List<UserResponseDTO> getAllCHPs() {
+        return userService.getUsersByRole(Role.CHP);
+    }
+     @PostMapping("/map-cha-chp")
+    public MappingResponseDTO mapChpToCha(@RequestBody MappingRequestDTO dto) {
+        return userService.createMapping(dto);
+    }
+     @GetMapping("/cha/{chaId}/chps")
+    public List<UserResponseDTO> getCHPsForCHA(@PathVariable Long chaId) {
+        return userService.getCHPsByCHA(chaId);
     }
 }

@@ -2,5 +2,7 @@ package com.livinggoodsbackend.livinggoodsbackend.enums;
 
 public enum Role {
     ADMIN,
-    USER
+    USER,
+    CHA,
+    CHP,
 }

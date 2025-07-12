@@ -16,6 +16,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Model.CommodityUnit;
 import com.livinggoodsbackend.livinggoodsbackend.Model.County;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Facility;
 import com.livinggoodsbackend.livinggoodsbackend.Model.SubCounty;
+import com.livinggoodsbackend.livinggoodsbackend.Model.User;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Ward;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.ChangeType;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityRecordRepository;
@@ -74,39 +75,48 @@ public class CommodityRecordService {
     }
     
     public CommodityRecordDTO createRecord(CreateCommodityRecordRequest request) {
-        CommodityUnit communityUnit = communityUnitRepository.findById(request.getCommunityUnitId())
-            .orElseThrow(() -> new ResourceNotFoundException("Community unit not found"));
-            
-        Commodity commodity = commodityRepository.findById(request.getCommodityId())
-            .orElseThrow(() -> new ResourceNotFoundException("Commodity not found"));
+    // Fetch Community Unit
+    CommodityUnit communityUnit = communityUnitRepository.findById(request.getCommunityUnitId())
+        .orElseThrow(() -> new ResourceNotFoundException("Community Unit not found"));
 
-        CommodityRecord record = new CommodityRecord();
-        record.setCommunityUnit(communityUnit);
-        record.setCommodity(commodity);
-        record.setQuantityExpired(request.getQuantityExpired());
-        record.setQuantityDamaged(request.getQuantityDamaged());
-        record.setStockOnHand(request.getStockOnHand());
-        record.setQuantityIssued(request.getQuantityIssued());
-        record.setExcessQuantityReturned(request.getExcessQuantityReturned());
-        record.setQuantityConsumed(request.getQuantityConsumed());
-        record.setClosingBalance(request.getClosingBalance());
-        record.setConsumptionPeriod(request.getConsumptionPeriod());
-        record.setEarliestExpiryDate(request.getEarliestExpiryDate()); // Add this line
-        record.setQuantityToOrder(request.getQuantityToOrder());        // Add this line
-        record.setCreatedAt(LocalDateTime.now());
-        record.setRecordDate(LocalDateTime.now());
-        record.setLastRestockDate(request.getLastRestockDate());
-        record.setStockOutDate(request.getStockOutDate());
-        record.setCreatedBy(request.getCreatedBy()); // Assuming you have a way to set the user who created the record
-        // record.setUpdatedAt(LocalDateTime.now());
+    // Fetch Commodity
+    Commodity commodity = commodityRepository.findById(request.getCommodityId())
+        .orElseThrow(() -> new ResourceNotFoundException("Commodity not found"));
 
-        CommodityRecord saved = commodityRecordRepository.save(record);
-        
-        // Create stock history entry
-        createStockHistoryEntry(saved, ChangeType.ADJUSTMENT);
-        
-        return convertToDTO(saved);
-    }
+    // Fetch CHP (User)
+    User chp = userRepository.findById(request.getChpId())
+        .orElseThrow(() -> new ResourceNotFoundException("CHP not found"));
+
+    // Create and populate CommodityRecord entity
+    CommodityRecord record = new CommodityRecord();
+    record.setCommunityUnit(communityUnit);
+    record.setCommodity(commodity);
+    record.setQuantityExpired(request.getQuantityExpired());
+    record.setQuantityDamaged(request.getQuantityDamaged());
+    record.setStockOnHand(request.getStockOnHand());
+    record.setQuantityIssued(request.getQuantityIssued());
+    record.setExcessQuantityReturned(request.getExcessQuantityReturned());
+    record.setQuantityConsumed(request.getQuantityConsumed());
+    record.setClosingBalance(request.getClosingBalance());
+    record.setConsumptionPeriod(request.getConsumptionPeriod());
+    record.setEarliestExpiryDate(request.getEarliestExpiryDate());
+    record.setQuantityToOrder(request.getQuantityToOrder());
+    record.setStockOutDate(request.getStockOutDate());
+    record.setLastRestockDate(request.getLastRestockDate());
+    record.setChp(chp);
+    record.setCreatedAt(LocalDateTime.now());
+    record.setRecordDate(LocalDateTime.now());
+
+    // Save the record
+    CommodityRecord saved = commodityRecordRepository.save(record);
+
+    // Log stock change
+    createStockHistoryEntry(saved, ChangeType.ADJUSTMENT);
+
+    // Convert to DTO and return
+    return convertToDTO(saved);
+}
+
     
     public CommodityRecordDTO updateRecord(Long id, CommodityRecord recordDetails) {
         CommodityRecord record = commodityRecordRepository.findById(id)
@@ -180,7 +190,7 @@ private CommodityRecordDTO convertToDTO(CommodityRecord record) {
     dto.setEarliestExpiryDate(record.getEarliestExpiryDate());
     dto.setQuantityToOrder(record.getQuantityToOrder());
     dto.setRecordDate(record.getRecordDate());
-    dto.setCreatedBy(record.getCreatedBy());
+    dto.setChp(record.getChp());
 
     // ✅ Fetch createdByUsername using created_by_id from communityUnit
     CommodityUnit cu = record.getCommunityUnit();

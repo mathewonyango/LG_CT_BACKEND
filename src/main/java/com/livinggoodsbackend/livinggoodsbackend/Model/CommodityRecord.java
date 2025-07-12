@@ -13,6 +13,9 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.livinggoodsbackend.livinggoodsbackend.Model.CommodityUnit;
+import com.livinggoodsbackend.livinggoodsbackend.Model.Commodity;
+import com.livinggoodsbackend.livinggoodsbackend.Model.User;
 
 @Entity
 @Table(name = "commodity_records")
@@ -50,6 +53,7 @@ public class CommodityRecord {
     @Column(name = "consumption_period")
     private Integer consumptionPeriod;
     
+    
     @Column(name = "earliest_expiry_date")
     private LocalDateTime earliestExpiryDate;
     
@@ -65,6 +69,9 @@ public class CommodityRecord {
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    // @Column(name = "created_by")
-    private Integer createdBy;
+
+    @ManyToOne
+    @JoinColumn(name = "chp_id")
+    private User chp;
+    // Additional fields can be added as needed
 }

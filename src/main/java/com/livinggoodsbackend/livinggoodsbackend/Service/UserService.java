@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,8 +13,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import com.livinggoodsbackend.livinggoodsbackend.Model.ChaChpMapping;
 import com.livinggoodsbackend.livinggoodsbackend.Model.User;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaChpMappingRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
+import com.livinggoodsbackend.livinggoodsbackend.dto.MappingRequestDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.MappingResponseDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.UserResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
 
@@ -28,6 +34,8 @@ public class UserService {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private ChaChpMappingRepository mappingRepository;
     
     @Value("${app.reset.token.expiry:3600000}") // 1 hour in milliseconds
     private long resetTokenExpiryMs;
@@ -166,5 +174,51 @@ public class UserService {
         user.setResetTokenExpiry(null);
         
         userRepository.save(user);
+    }
+
+
+   public List<UserResponseDTO> getUsersByRole(Role role) {
+    return userRepository.findByRole(role).stream().map(user -> {
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setUsername(user.getUsername());
+        // dto.setRole(user.getRole().name());
+        return dto;
+    }).collect(Collectors.toList());
+}
+
+    public MappingResponseDTO createMapping(MappingRequestDTO request) {
+        ChaChpMapping mapping = new ChaChpMapping();
+        mapping.setChaId(request.getChaId());
+        mapping.setChpId(request.getChpId());
+        mapping.setCommunityUnitId(request.getCommunityUnitId());
+
+        ChaChpMapping saved = mappingRepository.save(mapping);
+
+        MappingResponseDTO response = new MappingResponseDTO();
+        response.setId(saved.getId());
+        response.setChaId(saved.getChaId());
+        response.setChpId(saved.getChpId());
+        response.setCommunityUnitId(saved.getCommunityUnitId());
+
+        return response;
+    }
+
+    
+      public List<UserResponseDTO> getCHPsByCHA(Long chaId) {
+        List<ChaChpMapping> mappings = mappingRepository.findByChaId(chaId);
+        List<Long> chpIds = mappings.stream().map(ChaChpMapping::getChpId).toList();
+
+        return userRepository.findAllById(chpIds).stream()
+                .map(user -> {
+                    UserResponseDTO dto = new UserResponseDTO();
+                    dto.setId(user.getId());
+                    dto.setEmail(user.getEmail());
+                    dto.setUsername(user.getUsername());
+                    // dto.setRole(user.getRole().name());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

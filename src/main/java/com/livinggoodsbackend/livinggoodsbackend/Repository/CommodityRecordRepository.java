@@ -20,7 +20,7 @@ public interface CommodityRecordRepository extends JpaRepository<CommodityRecord
     List<CommodityRecord> findByCommunityUnitId(Long communityUnitId);
     List<CommodityRecord> findByCommodityId(Long commodityId);
     List<CommodityRecord> findByCommunityUnitIdAndCommodityId(Long communityUnitId, Long commodityId);
-    List<CommodityRecord> findByCreatedBy(User createdBy);
+    List<CommodityRecord> findByChp_Id(Long chpId);
     List<CommodityRecord> findByRecordDateBetween(LocalDateTime start, LocalDateTime end);
     List<CommodityRecord> findByStockOnHandLessThan(Integer threshold);
     

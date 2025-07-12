@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+import com.livinggoodsbackend.livinggoodsbackend.Model.User;
+
 @Data
 public class CreateCommodityRecordRequest {
     @NotNull(message = "Community unit ID is required")
@@ -50,7 +52,6 @@ public class CreateCommodityRecordRequest {
 
     private LocalDateTime lastRestockDate;
 
-    private Integer createdBy; // Total CHPs counted for the record
-    // private Long createdBy; // ID of the user creating the record
-
+@NotNull(message = "CHP ID is required")
+    private Long chpId; // 
 }
