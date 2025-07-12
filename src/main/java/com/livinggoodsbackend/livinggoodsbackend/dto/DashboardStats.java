@@ -46,13 +46,6 @@ public class DashboardStats {
         this.totalWards = totalWards;
     }
 
-/*************  ✨ Windsurf Command ⭐  *************/
-    /**
-     * Gets the total number of facilities in the system.
-     * 
-     * @return Total number of facilities.
-     */
-/*******  c0e7821e-49c0-4bab-8544-378c2ced6158  *******/
     public int getTotalFacilities() {
         return totalFacilities;
     }
@@ -129,6 +122,7 @@ public class DashboardStats {
         public String getName() {
             return name;
         }
+
 
         public void setName(String name) {
             this.name = name;

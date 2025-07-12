@@ -1,8 +1,15 @@
 package com.livinggoodsbackend.livinggoodsbackend.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -16,135 +23,146 @@ import org.springframework.mail.javamail.JavaMailSender;
 import com.livinggoodsbackend.livinggoodsbackend.Model.ChaChpMapping;
 import com.livinggoodsbackend.livinggoodsbackend.Model.User;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaChpMappingRepository;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityRecordRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardResponseDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardStatsDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardStatsDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.CommodityRecordDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingRequestDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.UserResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardStatsDTO;
 
 import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class UserService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
+    @Autowired
+    private CommodityRecordRepository commodityRecordRepository;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
     private ChaChpMappingRepository mappingRepository;
-    
+
     @Value("${app.reset.token.expiry:3600000}") // 1 hour in milliseconds
     private long resetTokenExpiryMs;
 
     @Autowired
     private JavaMailSender emailSender;
-    
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
-    
+
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
-    
-  public User createUser(User user) {
-    // Validation
-    if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-        throw new IllegalArgumentException("Username already exists");
-    }
-    if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-        throw new IllegalArgumentException("Email already exists");
+
+    public User createUser(User user) {
+        // Validation
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
+        // Set default/required values
+        user.setId(null);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setLastLogin(null);
+        user.setVersion(0L);
+
+        // Set default role if not provided
+        // if (user.getRole() == null) {
+        // user.setRole(Role.USER);
+        // }
+
+        // Save and return
+        return userRepository.save(user);
     }
 
-    // Set default/required values
-    user.setId(null);
-    user.setCreatedAt(LocalDateTime.now());
-    user.setLastLogin(null);
-    user.setVersion(0L);
-    
-    // Set default role if not provided
-    // if (user.getRole() == null) {
-    //     user.setRole(Role.USER);
+    // public User updateUser(Long id, User userDetails) {
+    // User existingUser = userRepository.findById(id);
+
+    // // Only update fields that are not null in the request
+    // if (userDetails.getUsername() != null) {
+    // // Check if new username is different and not already taken
+    // if (!userDetails.getUsername().equals(existingUser.getUsername()) &&
+    // userRepository.findByUsername(userDetails.getUsername()).isPresent()) {
+    // throw new IllegalArgumentException("Username already exists");
+    // }
+    // existingUser.setUsername(userDetails.getUsername());
     // }
 
-    // Save and return
-    return userRepository.save(user);
-}
-    
-    public User updateUser(Long id, User userDetails) {
-        User existingUser = userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        // Only update fields that are not null in the request
-        if (userDetails.getUsername() != null) {
-            // Check if new username is different and not already taken
-            if (!userDetails.getUsername().equals(existingUser.getUsername()) && 
-                userRepository.findByUsername(userDetails.getUsername()).isPresent()) {
-                throw new IllegalArgumentException("Username already exists");
-            }
-            existingUser.setUsername(userDetails.getUsername());
-        }
-        
-        if (userDetails.getEmail() != null) {
-            // Check if new email is different and not already taken
-            if (!userDetails.getEmail().equals(existingUser.getEmail()) && 
-                userRepository.findByEmail(userDetails.getEmail()).isPresent()) {
-                throw new IllegalArgumentException("Email already exists");
-            }
-            existingUser.setEmail(userDetails.getEmail());
-        }
-        
-        if (userDetails.getRole() != null) {
-            existingUser.setRole(userDetails.getRole());
-        }
+    // if (userDetails.getEmail() != null) {
+    // // Check if new email is different and not already taken
+    // if (!userDetails.getEmail().equals(existingUser.getEmail()) &&
+    // userRepository.findByEmail(userDetails.getEmail()).isPresent()) {
+    // throw new IllegalArgumentException("Email already exists");
+    // }
+    // existingUser.setEmail(userDetails.getEmail());
+    // }
 
-        // Never update these fields from request
-        // existingUser.setCreatedAt - should never change
-        // existingUser.setPasswordHash - should use separate password change endpoint
-        // existingUser.setLastLogin - should only be updated on login
-        // existingUser.setVersion - handled by @Version annotation
-         
-        existingUser.setVersion(0L);
-        return userRepository.save(existingUser);
-    }
-    
+    // if (userDetails.getRole() != null) {
+    // existingUser.setRole(userDetails.getRole());
+    // }
+
+    // // Never update these fields from request
+    // // existingUser.setCreatedAt - should never change
+    // // existingUser.setPasswordHash - should use separate password change
+    // endpoint
+    // // existingUser.setLastLogin - should only be updated on login
+    // // existingUser.setVersion - handled by @Version annotation
+
+    // existingUser.setVersion(0L);
+    // return userRepository.save(existingUser);
+    // }
+
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
-    
+
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
-    
+
     // public List<User> getUsersByRole(User role) {
-    //     return userRepository.findByRole(role);
+    // return userRepository.findByRole(role);
     // }
 
-    public void updatePassword(Long userId, String currentPassword, String newPassword) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+    // public void updatePassword(Long userId, String currentPassword, String
+    // newPassword) {
+    // User user = userRepository.findById(userId);
+    // // .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Verify current password
-        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
-            throw new IllegalArgumentException("Current password is incorrect");
-        }
+    // // Verify current password
+    // if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+    // throw new IllegalArgumentException("Current password is incorrect");
+    // }
 
-        // Update to new password
-        user.setPasswordHash(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-    }
+    // // Update to new password
+    // user.setPasswordHash(passwordEncoder.encode(newPassword));
+    // userRepository.save(user);
+    // }
 
     public void initiatePasswordReset(String email) {
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Generate random token
         String token = UUID.randomUUID().toString();
-        
+
         // Set token and expiry
         user.setResetToken(token);
         user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(resetTokenExpiryMs));
@@ -155,14 +173,14 @@ public class UserService {
         message.setTo(user.getEmail());
         message.setSubject("Password Reset Request");
         message.setText("To reset your password, click the link below:\n\n" +
-                       "http://your-frontend-url/reset-password?token=" + token);
-        
+                "http://your-frontend-url/reset-password?token=" + token);
+
         emailSender.send(message);
     }
 
     public void resetPassword(String token, String newPassword) {
         User user = userRepository.findByResetToken(token)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
 
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Reset token has expired");
@@ -172,21 +190,20 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setResetToken(null);
         user.setResetTokenExpiry(null);
-        
+
         userRepository.save(user);
     }
 
-
-   public List<UserResponseDTO> getUsersByRole(Role role) {
-    return userRepository.findByRole(role).stream().map(user -> {
-        UserResponseDTO dto = new UserResponseDTO();
-        dto.setId(user.getId());
-        dto.setEmail(user.getEmail());
-        dto.setUsername(user.getUsername());
-        // dto.setRole(user.getRole().name());
-        return dto;
-    }).collect(Collectors.toList());
-}
+    public List<UserResponseDTO> getUsersByRole(Role role) {
+        return userRepository.findByRole(role).stream().map(user -> {
+            UserResponseDTO dto = new UserResponseDTO();
+            dto.setId(user.getId());
+            dto.setEmail(user.getEmail());
+            dto.setUsername(user.getUsername());
+            // dto.setRole(user.getRole().name());
+            return dto;
+        }).collect(Collectors.toList());
+    }
 
     public MappingResponseDTO createMapping(MappingRequestDTO request) {
         ChaChpMapping mapping = new ChaChpMapping();
@@ -205,20 +222,174 @@ public class UserService {
         return response;
     }
 
-    
-      public List<UserResponseDTO> getCHPsByCHA(Long chaId) {
-        List<ChaChpMapping> mappings = mappingRepository.findByChaId(chaId);
-        List<Long> chpIds = mappings.stream().map(ChaChpMapping::getChpId).toList();
+   public ChaDashboardResponseDTO getCHPsByCHA(Long chaId) {
+    List<ChaChpMapping> mappings = mappingRepository.findByChaId(chaId);
+    List<Long> chpIds = mappings.stream().map(ChaChpMapping::getChpId).toList();
 
-        return userRepository.findAllById(chpIds).stream()
-                .map(user -> {
-                    UserResponseDTO dto = new UserResponseDTO();
-                    dto.setId(user.getId());
-                    dto.setEmail(user.getEmail());
-                    dto.setUsername(user.getUsername());
-                    // dto.setRole(user.getRole().name());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+    YearMonth currentMonth = YearMonth.now();
+    LocalDateTime startOfMonth = currentMonth.atDay(1).atStartOfDay();
+    LocalDateTime endOfMonth = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+
+    List<ChpDashboardDTO> chpDtos = new ArrayList<>();
+
+    for (User user : userRepository.findAllById(chpIds)) {
+        ChpDashboardDTO dto = new ChpDashboardDTO();
+        dto.setChpId(user.getId());
+        dto.setChpUsername(user.getUsername());
+        dto.setChpEmail(user.getEmail());
+
+        List<CommodityRecordDTO> records = commodityRecordRepository.findByChp_Id(user.getId())
+            .stream().map(record -> {
+                CommodityRecordDTO recDto = new CommodityRecordDTO();
+                recDto.setId(record.getId());
+                recDto.setStockOnHand(record.getStockOnHand());
+                recDto.setQuantityIssued(record.getQuantityIssued());
+                recDto.setClosingBalance(record.getClosingBalance());
+                recDto.setLastRestockDate(record.getLastRestockDate());
+                recDto.setQuantityConsumed(record.getQuantityConsumed());
+                recDto.setQuantityExpired(record.getQuantityExpired());
+                recDto.setQuantityDamaged(record.getQuantityDamaged());
+                recDto.setQuantityToOrder(record.getQuantityToOrder());
+                recDto.setEarliestExpiryDate(record.getEarliestExpiryDate());
+                recDto.setRecordDate(record.getRecordDate());
+                recDto.setExcessQuantityReturned(record.getExcessQuantityReturned());
+                recDto.setConsumptionPeriod(record.getConsumptionPeriod());
+                recDto.setStockOutDate(record.getStockOutDate());
+
+                if (record.getCommodity() != null) {
+                    recDto.setCommodityId(record.getCommodity().getId());
+                    recDto.setCommodityName(record.getCommodity().getName());
+                }
+
+                if (record.getCommunityUnit() != null) {
+                    recDto.setCommunityUnitId(record.getCommunityUnit().getId());
+                    recDto.setCommunityUnitName(record.getCommunityUnit().getCommunityUnitName());
+
+                    if (record.getCommunityUnit().getLinkFacility() != null) {
+                        recDto.setFacilityId(record.getCommunityUnit().getLinkFacility().getId());
+                        recDto.setFacilityName(record.getCommunityUnit().getLinkFacility().getName());
+                    }
+
+                    if (record.getCommunityUnit().getWard() != null) {
+                        recDto.setWardId(record.getCommunityUnit().getWard().getId());
+                        recDto.setWardName(record.getCommunityUnit().getWard().getName());
+
+                        if (record.getCommunityUnit().getWard().getSubCounty() != null) {
+                            recDto.setSubCountyId(record.getCommunityUnit().getWard().getSubCounty().getId());
+                            recDto.setSubCountyName(record.getCommunityUnit().getWard().getSubCounty().getName());
+
+                            if (record.getCommunityUnit().getWard().getSubCounty().getCounty() != null) {
+                                recDto.setCountyId(record.getCommunityUnit().getWard().getSubCounty().getCounty().getId());
+                                recDto.setCountyName(record.getCommunityUnit().getWard().getSubCounty().getCounty().getName());
+                            }
+                        }
+                    }
+                }
+
+                return recDto;
+            }).collect(Collectors.toList());
+
+        dto.setCommodityRecords(records);
+
+        ChpDashboardStatsDTO stats = new ChpDashboardStatsDTO();
+        stats.setTotalRecords(records.size());
+        stats.setTotalIssued(records.stream().mapToInt(r -> r.getQuantityIssued() != null ? r.getQuantityIssued() : 0).sum());
+        stats.setTotalConsumed(records.stream().mapToInt(r -> r.getQuantityConsumed() != null ? r.getQuantityConsumed() : 0).sum());
+        stats.setTotalExpired(records.stream().mapToInt(r -> r.getQuantityExpired() != null ? r.getQuantityExpired() : 0).sum());
+        stats.setTotalDamaged(records.stream().mapToInt(r -> r.getQuantityDamaged() != null ? r.getQuantityDamaged() : 0).sum());
+
+        List<String> outOfStock = records.stream()
+            .filter(r -> r.getStockOnHand() != null && r.getStockOnHand() < 1)
+            .map(CommodityRecordDTO::getCommodityName).distinct().toList();
+        stats.setOutOfStockCommodities(outOfStock);
+        stats.setTotalOutOfStock(outOfStock.size());
+
+        List<String> toReorder = records.stream()
+            .filter(r -> r.getQuantityToOrder() != null && r.getQuantityToOrder() > 0)
+            .map(CommodityRecordDTO::getCommodityName).distinct().toList();
+        stats.setCommoditiesToReorder(toReorder);
+
+        List<String> inExcess = records.stream()
+            .filter(r -> r.getExcessQuantityReturned() != null && r.getExcessQuantityReturned() > 0)
+            .map(CommodityRecordDTO::getCommodityName).distinct().toList();
+        stats.setCommoditiesInExcess(inExcess);
+
+        List<String> slowMoving = records.stream()
+            .filter(r -> r.getQuantityConsumed() != null && r.getQuantityConsumed() < 5)
+            .map(CommodityRecordDTO::getCommodityName).distinct().toList();
+        stats.setSlowMovingCommodities(slowMoving);
+
+        // Forecast
+        Map<String, Double> forecast = records.stream()
+            .filter(r -> r.getQuantityConsumed() != null && r.getConsumptionPeriod() != null && r.getConsumptionPeriod() > 0)
+            .collect(Collectors.groupingBy(
+                CommodityRecordDTO::getCommodityName,
+                Collectors.averagingDouble(r -> r.getQuantityConsumed() * 30.0 / r.getConsumptionPeriod())
+            ));
+        stats.setForecast(forecast);
+
+        // CHP Advice
+        StringBuilder advice = new StringBuilder();
+        boolean hasThisMonthRecord = records.stream().anyMatch(r ->
+            r.getRecordDate() != null && !r.getRecordDate().isBefore(startOfMonth) && !r.getRecordDate().isAfter(endOfMonth));
+
+        if (!hasThisMonthRecord) {
+            advice.append("No records submitted for this month. ");
+        }
+
+        Set<String> allCommodities = records.stream().map(CommodityRecordDTO::getCommodityName)
+            .filter(Objects::nonNull).collect(Collectors.toSet());
+
+        Set<String> userCommodities = new HashSet<>(allCommodities); // copy for comparison
+        allCommodities.removeAll(userCommodities);
+
+        if (!allCommodities.isEmpty()) {
+            advice.append("Missing records for commodities: ").append(String.join(", ", allCommodities)).append(". ");
+        }
+
+        if (!toReorder.isEmpty()) advice.append("Reorder: ").append(String.join(", ", toReorder)).append(". ");
+        if (!inExcess.isEmpty()) advice.append("Excess: ").append(String.join(", ", inExcess)).append(". ");
+        if (!slowMoving.isEmpty()) advice.append("Slow moving: ").append(String.join(", ", slowMoving)).append(". ");
+        if (!outOfStock.isEmpty()) advice.append("Out of stock: ").append(String.join(", ", outOfStock)).append(". ");
+        if (advice.length() == 0) advice.append("All commodities are well managed.");
+
+        stats.setAdvice(advice.toString());
+        dto.setStats(stats);
+        chpDtos.add(dto);
     }
+
+    // CHA-level stats
+    List<CommodityRecordDTO> allRecords = chpDtos.stream()
+        .flatMap(c -> c.getCommodityRecords().stream()).collect(Collectors.toList());
+
+    ChaDashboardStatsDTO chaStats = new ChaDashboardStatsDTO();
+    chaStats.setTotalRecords(allRecords.size());
+    chaStats.setTotalIssued(allRecords.stream().mapToInt(r -> r.getQuantityIssued() != null ? r.getQuantityIssued() : 0).sum());
+    chaStats.setTotalConsumed(allRecords.stream().mapToInt(r -> r.getQuantityConsumed() != null ? r.getQuantityConsumed() : 0).sum());
+    chaStats.setTotalExpired(allRecords.stream().mapToInt(r -> r.getQuantityExpired() != null ? r.getQuantityExpired() : 0).sum());
+    chaStats.setTotalDamaged(allRecords.stream().mapToInt(r -> r.getQuantityDamaged() != null ? r.getQuantityDamaged() : 0).sum());
+    chaStats.setTotalClosingBalance(allRecords.stream().mapToInt(r -> r.getClosingBalance() != null ? r.getClosingBalance() : 0).sum());
+
+    List<String> chpsNoRecordThisMonth = chpDtos.stream()
+        .filter(c -> c.getCommodityRecords().stream()
+            .noneMatch(r -> r.getRecordDate() != null &&
+                !r.getRecordDate().isBefore(startOfMonth) &&
+                !r.getRecordDate().isAfter(endOfMonth)))
+        .map(ChpDashboardDTO::getChpUsername).toList();
+
+    StringBuilder chaAdvice = new StringBuilder();
+    if (!chpsNoRecordThisMonth.isEmpty()) {
+        chaAdvice.append("CHP(s) ")
+            .append(String.join(", ", chpsNoRecordThisMonth))
+            .append(" have not submitted records for this month.");
+    }
+
+    ChaDashboardResponseDTO response = new ChaDashboardResponseDTO();
+    response.setChps(chpDtos);
+    response.setStats(chaStats);
+    response.setAdvice(chaAdvice.toString());
+    return response;
+}
+
+
 }

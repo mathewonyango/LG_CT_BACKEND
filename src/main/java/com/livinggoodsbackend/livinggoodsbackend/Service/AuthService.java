@@ -40,11 +40,9 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
             .orElseThrow(() -> new AuthenticationException("Invalid username or password"));
-
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new AuthenticationException("Invalid username or password");
         }
-
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 

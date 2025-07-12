@@ -24,6 +24,8 @@ import com.livinggoodsbackend.livinggoodsbackend.Model.User;
 import com.livinggoodsbackend.livinggoodsbackend.Service.UserService;
 
 import com.livinggoodsbackend.livinggoodsbackend.dto.ApiResponse;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardResponseDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateUserRequest;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingRequestDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingResponseDTO;
@@ -79,23 +81,23 @@ public class UserController {
                 .body(new ApiResponse(false, "User not found", null)));
     } 
     // Update user
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        try {
-            User updatedUser = userService.updateUser(id, userDetails);
-            return ResponseEntity.ok(new ApiResponse(
-                true,
-                "User updated successfully",
-                updatedUser
-            ));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                .body(new ApiResponse(false, e.getMessage(), null));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse(false, e.getMessage(), null));
-        }
-    }
+    // @PutMapping("/{id}")
+    // public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+    //     try {
+    //         User updatedUser = userService.updateUser(id, userDetails);
+    //         return ResponseEntity.ok(new ApiResponse(
+    //             true,
+    //             "User updated successfully",
+    //             updatedUser
+    //         ));
+    //     } catch (IllegalArgumentException e) {
+    //         return ResponseEntity.badRequest()
+    //             .body(new ApiResponse(false, e.getMessage(), null));
+    //     } catch (RuntimeException e) {
+    //         return ResponseEntity.status(HttpStatus.NOT_FOUND)
+    //             .body(new ApiResponse(false, e.getMessage(), null));
+    //     }
+    // }
     
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
@@ -145,7 +147,7 @@ public class UserController {
         return userService.createMapping(dto);
     }
      @GetMapping("/cha/{chaId}/chps")
-    public List<UserResponseDTO> getCHPsForCHA(@PathVariable Long chaId) {
+    public ChaDashboardResponseDTO getCHPsForCHA(@PathVariable Long chaId) {
         return userService.getCHPsByCHA(chaId);
     }
 }

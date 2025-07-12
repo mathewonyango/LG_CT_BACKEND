@@ -18,4 +18,9 @@ public class CreateFacilityRequest {
     
     @NotNull(message = "Ward ID is required")
     private List<Long> wardIds;
+
+    public String getFacilityCode() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getFacilityCode'");
+    }
 }
