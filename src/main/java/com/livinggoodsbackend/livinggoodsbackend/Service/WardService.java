@@ -77,6 +77,7 @@ public class WardService {
     
     private WardDTO convertToDTO(Ward ward) {
         WardDTO dto = new WardDTO();
+        dto.setId(ward.getId());
         dto.setName(ward.getName());
         // Safely handle null SubCounty
         if (ward.getSubCounty() != null) {

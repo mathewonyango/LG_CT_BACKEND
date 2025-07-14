@@ -202,28 +202,29 @@ private CommodityRecordDTO convertToDTO(CommodityRecord record) {
 
     // ✅ Add location hierarchy info
     Facility facility = cu.getLinkFacility();
-    if (facility != null) {
-        dto.setFacilityId(facility.getId());
-        dto.setFacilityName(facility.getName());
+if (facility != null) {
+    dto.setFacilityId(facility.getId());
+    dto.setFacilityName(facility.getName());
 
-        Ward ward = facility.getWard();
-        if (ward != null) {
-            dto.setWardId(ward.getId());
-            dto.setWardName(ward.getName());
+    Ward ward = facility.getWard();
+    if (ward != null) {
+        dto.setWardId(ward.getId());
+        dto.setWardName(ward.getName()); // <- this is what you want
 
-            SubCounty subCounty = ward.getSubCounty();
-            if (subCounty != null) {
-                dto.setSubCountyId(subCounty.getId());
-                dto.setSubCountyName(subCounty.getName());
+        SubCounty subCounty = ward.getSubCounty();
+        if (subCounty != null) {
+            dto.setSubCountyId(subCounty.getId());
+            dto.setSubCountyName(subCounty.getName());
 
-                County county = subCounty.getCounty();
-                if (county != null) {
-                    dto.setCountyId(county.getId());
-                    dto.setCountyName(county.getName());
-                }
+            County county = subCounty.getCounty();
+            if (county != null) {
+                dto.setCountyId(county.getId());
+                dto.setCountyName(county.getName());
             }
         }
     }
+}
+
 
     return dto;
 }

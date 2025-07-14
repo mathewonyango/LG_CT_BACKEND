@@ -119,11 +119,10 @@ public interface CommodityRecordRepository extends JpaRepository<CommodityRecord
 
     // Fetch with locations (JPQL - database agnostic)
     @Query("SELECT cr FROM CommodityRecord cr " +
-           "LEFT JOIN FETCH cr.communityUnit cu " +
-           "LEFT JOIN FETCH cu.linkFacility f " +
-           "LEFT JOIN FETCH f.ward w " +
-           "LEFT JOIN FETCH w.subCounty sc " +
-           "LEFT JOIN FETCH sc.county")
+       "LEFT JOIN FETCH cr.communityUnit cu " +
+       "LEFT JOIN FETCH cu.ward w " +
+       "LEFT JOIN FETCH w.subCounty sc " +
+       "LEFT JOIN FETCH sc.county")
     List<CommodityRecord> findAllWithLocations();
 
     // Get stock levels grouped by community unit (JPQL - database agnostic)
