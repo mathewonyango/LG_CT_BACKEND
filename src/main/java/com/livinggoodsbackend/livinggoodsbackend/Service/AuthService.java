@@ -64,6 +64,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole() != null ? request.getRole() : Role.USER);
+        user.setPhoneNumber(request.getPhoneNumber());
 
         user.setCreatedAt(LocalDateTime.now());
         user.setLastLogin(LocalDateTime.now());

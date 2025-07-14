@@ -35,7 +35,8 @@ public class User {
     
     @Column(unique = true)
     private String email;
-    
+    private String phoneNumber;
+
     @Column(name = "password_hash")
     private String passwordHash;
     
