@@ -21,21 +21,32 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
 import com.livinggoodsbackend.livinggoodsbackend.Model.ChaChpMapping;
+import com.livinggoodsbackend.livinggoodsbackend.Model.ChaCuMapping;
+import com.livinggoodsbackend.livinggoodsbackend.Model.ChpCuMapping;
 import com.livinggoodsbackend.livinggoodsbackend.Model.User;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaChpMappingRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityRecordRepository;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityUnitRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChaCuMappingRequestDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChaCuMappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardStatsDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpBasicInfoDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpCuMappingRequestDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpCuMappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardStatsDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CommodityRecordDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.CuBasicInfoDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingRequestDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.UserResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardStatsDTO;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaCuMappingRepository;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.ChpCuMappingRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -59,6 +70,14 @@ public class UserService {
 
     @Autowired
     private JavaMailSender emailSender;
+    @Autowired
+    private ChaCuMappingRepository chaCuMappingRepository;
+
+    @Autowired
+    private ChpCuMappingRepository chpCuMappingRepository;
+
+    @Autowired
+    private CommodityUnitRepository communityUnitRepository;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -91,6 +110,77 @@ public class UserService {
         // Save and return
         return userRepository.save(user);
     }
+
+
+    public ChaCuMappingResponseDTO mapChaToCu(ChaCuMappingRequestDTO request) {
+    ChaCuMapping mapping = new ChaCuMapping();
+    mapping.setChaId(request.getChaId());
+    mapping.setCommunityUnitId(request.getCommunityUnitId());
+
+    ChaCuMapping saved = chaCuMappingRepository.save(mapping);
+
+    ChaCuMappingResponseDTO response = new ChaCuMappingResponseDTO();
+    response.setId(saved.getId());
+    response.setChaId(saved.getChaId());
+    response.setCommunityUnitId(saved.getCommunityUnitId());
+
+    return response;
+}
+public ChpCuMappingResponseDTO mapChpToCu(ChpCuMappingRequestDTO request) {
+    ChpCuMapping mapping = new ChpCuMapping();
+    mapping.setChpId(request.getChpId());
+    mapping.setCommunityUnitId(request.getCommunityUnitId());
+
+    ChpCuMapping saved = chpCuMappingRepository.save(mapping);
+
+    ChpCuMappingResponseDTO response = new ChpCuMappingResponseDTO();
+    response.setId(saved.getId());
+    response.setChpId(saved.getChpId());
+    response.setCommunityUnitId(saved.getCommunityUnitId());
+
+    return response;
+}
+
+
+// Get all CHP IDs mapped to a Community Unit
+   public List<ChpBasicInfoDTO> getChpDetailsByCommunityUnit(Long communityUnitId) {
+    List<ChpCuMapping> mappings = chpCuMappingRepository.findByCommunityUnitId(communityUnitId);
+
+    return mappings.stream()
+            .map(mapping -> userRepository.findById(mapping.getChpId()).orElse(null))
+            .filter(user -> user != null)
+            .map(user -> {
+                ChpBasicInfoDTO dto = new ChpBasicInfoDTO();
+                dto.setId(user.getId());
+                dto.setUsername(user.getUsername());
+                dto.setEmail(user.getEmail());
+                dto.setPhoneNumber(user.getPhoneNumber());
+                return dto;
+            })
+            .collect(Collectors.toList());
+}
+        public List<CuBasicInfoDTO> getCommunityUnitDetailsByCha(Long chaId) {
+            List<ChaCuMapping> mappings = chaCuMappingRepository.findByChaId(chaId);
+
+            return mappings.stream()
+                    .map(mapping -> communityUnitRepository.findById(mapping.getCommunityUnitId()).orElse(null))
+                    .filter(cu -> cu != null)
+                    .map(cu -> {
+                        CuBasicInfoDTO dto = new CuBasicInfoDTO();
+                        dto.setId(cu.getId());
+                        dto.setName(cu.getCommunityUnitName());
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+        }
+
+
+    // Get all Community Unit IDs mapped to a CHA
+    public List<Long> getCusByCha(Long chaId) {
+        List<ChaCuMapping> mappings = chaCuMappingRepository.findByChaId(chaId);
+        return mappings.stream().map(ChaCuMapping::getCommunityUnitId).collect(Collectors.toList());
+    }
+
 
     // public User updateUser(Long id, User userDetails) {
     // User existingUser = userRepository.findById(id);
@@ -205,22 +295,22 @@ public class UserService {
         }).collect(Collectors.toList());
     }
 
-    public MappingResponseDTO createMapping(MappingRequestDTO request) {
-        ChaChpMapping mapping = new ChaChpMapping();
-        mapping.setChaId(request.getChaId());
-        mapping.setChpId(request.getChpId());
-        mapping.setCommunityUnitId(request.getCommunityUnitId());
+    // public MappingResponseDTO createMapping(MappingRequestDTO request) {
+    //     ChaChpMapping mapping = new ChaChpMapping();
+    //     mapping.setChaId(request.getChaId());
+    //     mapping.setChpId(request.getChpId());
+    //     mapping.setCommunityUnitId(request.getCommunityUnitId());
 
-        ChaChpMapping saved = mappingRepository.save(mapping);
+    //     ChaChpMapping saved = mappingRepository.save(mapping);
 
-        MappingResponseDTO response = new MappingResponseDTO();
-        response.setId(saved.getId());
-        response.setChaId(saved.getChaId());
-        response.setChpId(saved.getChpId());
-        response.setCommunityUnitId(saved.getCommunityUnitId());
+    //     MappingResponseDTO response = new MappingResponseDTO();
+    //     response.setId(saved.getId());
+    //     response.setChaId(saved.getChaId());
+    //     response.setChpId(saved.getChpId());
+    //     response.setCommunityUnitId(saved.getCommunityUnitId());
 
-        return response;
-    }
+    //     return response;
+    // }
 
    public ChaDashboardResponseDTO getCHPsByCHA(Long chaId) {
     List<ChaChpMapping> mappings = mappingRepository.findByChaId(chaId);

@@ -24,9 +24,15 @@ import com.livinggoodsbackend.livinggoodsbackend.Model.User;
 import com.livinggoodsbackend.livinggoodsbackend.Service.UserService;
 
 import com.livinggoodsbackend.livinggoodsbackend.dto.ApiResponse;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChaCuMappingRequestDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChaCuMappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardResponseDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpBasicInfoDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpCuMappingRequestDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ChpCuMappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateUserRequest;
+import com.livinggoodsbackend.livinggoodsbackend.dto.CuBasicInfoDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingRequestDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.UpdateUserRequest;
@@ -142,12 +148,37 @@ public class UserController {
     public List<UserResponseDTO> getAllCHPs() {
         return userService.getUsersByRole(Role.CHP);
     }
-     @PostMapping("/map-cha-chp")
-    public MappingResponseDTO mapChpToCha(@RequestBody MappingRequestDTO dto) {
-        return userService.createMapping(dto);
+
+       @PostMapping("/cha-to-cu")
+    public ResponseEntity<ChaCuMappingResponseDTO> mapChaToCu(@RequestBody ChaCuMappingRequestDTO request) {
+        return ResponseEntity.ok(userService.mapChaToCu(request));
     }
-     @GetMapping("/cha/{chaId}/chps")
-    public ChaDashboardResponseDTO getCHPsForCHA(@PathVariable Long chaId) {
-        return userService.getCHPsByCHA(chaId);
+
+    // Get all CHPs under a specific Community Unit
+        @GetMapping("/cu/{communityUnitId}/chps/details")
+        public ResponseEntity<List<ChpBasicInfoDTO>> getChpDetails(@PathVariable Long communityUnitId) {
+            return ResponseEntity.ok(userService.getChpDetailsByCommunityUnit(communityUnitId));
+        }
+
+        @GetMapping("/cha/{chaId}/cus/details")
+        public ResponseEntity<List<CuBasicInfoDTO>> getCuDetails(@PathVariable Long chaId) {
+            return ResponseEntity.ok(userService.getCommunityUnitDetailsByCha(chaId));
+        }
+
+        // Get all CUs assigned to a specific CHA
+        @GetMapping("/cha/{chaId}/cus")
+        public ResponseEntity<List<Long>> getCusByCha(@PathVariable Long chaId) {
+            List<Long> cuIds = userService.getCusByCha(chaId);
+            return ResponseEntity.ok(cuIds);
+        }
+
+    @PostMapping("/chp-to-cu")
+    public ResponseEntity<ChpCuMappingResponseDTO> mapChpToCu(@RequestBody ChpCuMappingRequestDTO request) {
+        return ResponseEntity.ok(userService.mapChpToCu(request));
     }
+    
+    //  @GetMapping("/cha/{chaId}/chps")
+    // public ChaDashboardResponseDTO getCHPsForCHA(@PathVariable Long chaId) {
+    //     return userService.getCHPsByCHA(chaId);
+    // }
 }
