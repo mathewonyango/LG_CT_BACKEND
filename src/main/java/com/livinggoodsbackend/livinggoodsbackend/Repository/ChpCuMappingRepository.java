@@ -11,4 +11,6 @@ import java.util.List;
 public interface ChpCuMappingRepository extends JpaRepository<ChpCuMapping, Long> {
     List<ChpCuMapping> findByChpId(Long chpId);
     List<ChpCuMapping> findByCommunityUnitId(Long communityUnitId);
+    List<ChpCuMapping> findByCommunityUnitIdIn(List<Long> cuIds);
+
 }

@@ -182,6 +182,37 @@ public ChpCuMappingResponseDTO mapChpToCu(ChpCuMappingRequestDTO request) {
     }
 
 
+    public List<ChpBasicInfoDTO> getChpsByCha(Long chaId) {
+    // Step 1: Get all CU IDs assigned to the CHA
+    List<Long> cuIds = chaCuMappingRepository.findByChaId(chaId).stream()
+            .map(ChaCuMapping::getCommunityUnitId)
+            .collect(Collectors.toList());
+
+    if (cuIds.isEmpty()) return new ArrayList<>();
+
+    // Step 2: Get all CHPs mapped to those CUs
+    List<Long> chpIds = chpCuMappingRepository.findByCommunityUnitIdIn(cuIds).stream()
+            .map(ChpCuMapping::getChpId)
+            .distinct()
+            .collect(Collectors.toList());
+
+    if (chpIds.isEmpty()) return new ArrayList<>();
+
+    // Step 3: Get full user details for those CHPs
+    return userRepository.findAllById(chpIds).stream()
+            .map(user -> {
+                ChpBasicInfoDTO dto = new ChpBasicInfoDTO();
+                dto.setId(user.getId());
+                dto.setUsername(user.getUsername());
+                dto.setEmail(user.getEmail());
+                dto.setPhoneNumber(user.getPhoneNumber());
+                return dto;
+            })
+            .collect(Collectors.toList());
+}
+
+
+
     // public User updateUser(Long id, User userDetails) {
     // User existingUser = userRepository.findById(id);
 
@@ -312,10 +343,201 @@ public ChpCuMappingResponseDTO mapChpToCu(ChpCuMappingRequestDTO request) {
     //     return response;
     // }
 
-   public ChaDashboardResponseDTO getCHPsByCHA(Long chaId) {
-    List<ChaChpMapping> mappings = mappingRepository.findByChaId(chaId);
-    List<Long> chpIds = mappings.stream().map(ChaChpMapping::getChpId).toList();
+//    public ChaDashboardResponseDTO getCHPsByCHA(Long chaId) {
+//     List<ChaChpMapping> mappings = mappingRepository.findByChaId(chaId);
+//     List<Long> chpIds = mappings.stream().map(ChaChpMapping::getChpId).toList();
 
+//     YearMonth currentMonth = YearMonth.now();
+//     LocalDateTime startOfMonth = currentMonth.atDay(1).atStartOfDay();
+//     LocalDateTime endOfMonth = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+
+//     List<ChpDashboardDTO> chpDtos = new ArrayList<>();
+
+//     for (User user : userRepository.findAllById(chpIds)) {
+//         ChpDashboardDTO dto = new ChpDashboardDTO();
+//         dto.setChpId(user.getId());
+//         dto.setChpUsername(user.getUsername());
+//         dto.setChpEmail(user.getEmail());
+
+//         List<CommodityRecordDTO> records = commodityRecordRepository.findByChp_Id(user.getId())
+//             .stream().map(record -> {
+//                 CommodityRecordDTO recDto = new CommodityRecordDTO();
+//                 recDto.setId(record.getId());
+//                 recDto.setStockOnHand(record.getStockOnHand());
+//                 recDto.setQuantityIssued(record.getQuantityIssued());
+//                 recDto.setClosingBalance(record.getClosingBalance());
+//                 recDto.setLastRestockDate(record.getLastRestockDate());
+//                 recDto.setQuantityConsumed(record.getQuantityConsumed());
+//                 recDto.setQuantityExpired(record.getQuantityExpired());
+//                 recDto.setQuantityDamaged(record.getQuantityDamaged());
+//                 recDto.setQuantityToOrder(record.getQuantityToOrder());
+//                 recDto.setEarliestExpiryDate(record.getEarliestExpiryDate());
+//                 recDto.setRecordDate(record.getRecordDate());
+//                 recDto.setExcessQuantityReturned(record.getExcessQuantityReturned());
+//                 recDto.setConsumptionPeriod(record.getConsumptionPeriod());
+//                 recDto.setStockOutDate(record.getStockOutDate());
+
+//                 if (record.getCommodity() != null) {
+//                     recDto.setCommodityId(record.getCommodity().getId());
+//                     recDto.setCommodityName(record.getCommodity().getName());
+//                 }
+
+//                 if (record.getCommunityUnit() != null) {
+//                     recDto.setCommunityUnitId(record.getCommunityUnit().getId());
+//                     recDto.setCommunityUnitName(record.getCommunityUnit().getCommunityUnitName());
+
+//                     if (record.getCommunityUnit().getLinkFacility() != null) {
+//                         recDto.setFacilityId(record.getCommunityUnit().getLinkFacility().getId());
+//                         recDto.setFacilityName(record.getCommunityUnit().getLinkFacility().getName());
+//                     }
+
+//                     if (record.getCommunityUnit().getWard() != null) {
+//                         recDto.setWardId(record.getCommunityUnit().getWard().getId());
+//                         recDto.setWardName(record.getCommunityUnit().getWard().getName());
+
+//                         if (record.getCommunityUnit().getWard().getSubCounty() != null) {
+//                             recDto.setSubCountyId(record.getCommunityUnit().getWard().getSubCounty().getId());
+//                             recDto.setSubCountyName(record.getCommunityUnit().getWard().getSubCounty().getName());
+
+//                             if (record.getCommunityUnit().getWard().getSubCounty().getCounty() != null) {
+//                                 recDto.setCountyId(record.getCommunityUnit().getWard().getSubCounty().getCounty().getId());
+//                                 recDto.setCountyName(record.getCommunityUnit().getWard().getSubCounty().getCounty().getName());
+//                             }
+//                         }
+//                     }
+//                 }
+
+//                 return recDto;
+//             }).collect(Collectors.toList());
+
+//         dto.setCommodityRecords(records);
+
+//         ChpDashboardStatsDTO stats = new ChpDashboardStatsDTO();
+//         stats.setTotalRecords(records.size());
+//         stats.setTotalIssued(records.stream().mapToInt(r -> r.getQuantityIssued() != null ? r.getQuantityIssued() : 0).sum());
+//         stats.setTotalConsumed(records.stream().mapToInt(r -> r.getQuantityConsumed() != null ? r.getQuantityConsumed() : 0).sum());
+//         stats.setTotalExpired(records.stream().mapToInt(r -> r.getQuantityExpired() != null ? r.getQuantityExpired() : 0).sum());
+//         stats.setTotalDamaged(records.stream().mapToInt(r -> r.getQuantityDamaged() != null ? r.getQuantityDamaged() : 0).sum());
+
+//         List<String> outOfStock = records.stream()
+//             .filter(r -> r.getStockOnHand() != null && r.getStockOnHand() < 1)
+//             .map(CommodityRecordDTO::getCommodityName).distinct().toList();
+//         stats.setOutOfStockCommodities(outOfStock);
+//         stats.setTotalOutOfStock(outOfStock.size());
+
+//         List<String> toReorder = records.stream()
+//             .filter(r -> r.getQuantityToOrder() != null && r.getQuantityToOrder() > 0)
+//             .map(CommodityRecordDTO::getCommodityName).distinct().toList();
+//         stats.setCommoditiesToReorder(toReorder);
+
+//         List<String> inExcess = records.stream()
+//             .filter(r -> r.getExcessQuantityReturned() != null && r.getExcessQuantityReturned() > 0)
+//             .map(CommodityRecordDTO::getCommodityName).distinct().toList();
+//         stats.setCommoditiesInExcess(inExcess);
+
+//         List<String> slowMoving = records.stream()
+//             .filter(r -> r.getQuantityConsumed() != null && r.getQuantityConsumed() < 5)
+//             .map(CommodityRecordDTO::getCommodityName).distinct().toList();
+//         stats.setSlowMovingCommodities(slowMoving);
+
+//         // Forecast
+//         Map<String, Double> forecast = records.stream()
+//             .filter(r -> r.getQuantityConsumed() != null && r.getConsumptionPeriod() != null && r.getConsumptionPeriod() > 0)
+//             .collect(Collectors.groupingBy(
+//                 CommodityRecordDTO::getCommodityName,
+//                 Collectors.averagingDouble(r -> r.getQuantityConsumed() * 30.0 / r.getConsumptionPeriod())
+//             ));
+//         stats.setForecast(forecast);
+
+//         // CHP Advice
+//         StringBuilder advice = new StringBuilder();
+//         boolean hasThisMonthRecord = records.stream().anyMatch(r ->
+//             r.getRecordDate() != null && !r.getRecordDate().isBefore(startOfMonth) && !r.getRecordDate().isAfter(endOfMonth));
+
+//         if (!hasThisMonthRecord) {
+//             advice.append("No records submitted for this month. ");
+//         }
+
+//         Set<String> allCommodities = records.stream().map(CommodityRecordDTO::getCommodityName)
+//             .filter(Objects::nonNull).collect(Collectors.toSet());
+
+//         Set<String> userCommodities = new HashSet<>(allCommodities); // copy for comparison
+//         allCommodities.removeAll(userCommodities);
+
+//         if (!allCommodities.isEmpty()) {
+//             advice.append("Missing records for commodities: ").append(String.join(", ", allCommodities)).append(". ");
+//         }
+
+//         if (!toReorder.isEmpty()) advice.append("Reorder: ").append(String.join(", ", toReorder)).append(". ");
+//         if (!inExcess.isEmpty()) advice.append("Excess: ").append(String.join(", ", inExcess)).append(". ");
+//         if (!slowMoving.isEmpty()) advice.append("Slow moving: ").append(String.join(", ", slowMoving)).append(". ");
+//         if (!outOfStock.isEmpty()) advice.append("Out of stock: ").append(String.join(", ", outOfStock)).append(". ");
+//         if (advice.length() == 0) advice.append("All commodities are well managed.");
+
+//         stats.setAdvice(advice.toString());
+//         dto.setStats(stats);
+//         chpDtos.add(dto);
+//     }
+
+//     // CHA-level stats
+//     List<CommodityRecordDTO> allRecords = chpDtos.stream()
+//         .flatMap(c -> c.getCommodityRecords().stream()).collect(Collectors.toList());
+
+//     ChaDashboardStatsDTO chaStats = new ChaDashboardStatsDTO();
+//     chaStats.setTotalRecords(allRecords.size());
+//     chaStats.setTotalIssued(allRecords.stream().mapToInt(r -> r.getQuantityIssued() != null ? r.getQuantityIssued() : 0).sum());
+//     chaStats.setTotalConsumed(allRecords.stream().mapToInt(r -> r.getQuantityConsumed() != null ? r.getQuantityConsumed() : 0).sum());
+//     chaStats.setTotalExpired(allRecords.stream().mapToInt(r -> r.getQuantityExpired() != null ? r.getQuantityExpired() : 0).sum());
+//     chaStats.setTotalDamaged(allRecords.stream().mapToInt(r -> r.getQuantityDamaged() != null ? r.getQuantityDamaged() : 0).sum());
+//     chaStats.setTotalClosingBalance(allRecords.stream().mapToInt(r -> r.getClosingBalance() != null ? r.getClosingBalance() : 0).sum());
+
+//     List<String> chpsNoRecordThisMonth = chpDtos.stream()
+//         .filter(c -> c.getCommodityRecords().stream()
+//             .noneMatch(r -> r.getRecordDate() != null &&
+//                 !r.getRecordDate().isBefore(startOfMonth) &&
+//                 !r.getRecordDate().isAfter(endOfMonth)))
+//         .map(ChpDashboardDTO::getChpUsername).toList();
+
+//     StringBuilder chaAdvice = new StringBuilder();
+//     if (!chpsNoRecordThisMonth.isEmpty()) {
+//         chaAdvice.append("CHP(s) ")
+//             .append(String.join(", ", chpsNoRecordThisMonth))
+//             .append(" have not submitted records for this month.");
+//     }
+
+//     ChaDashboardResponseDTO response = new ChaDashboardResponseDTO();
+//     response.setChps(chpDtos);
+//     response.setStats(chaStats);
+//     response.setAdvice(chaAdvice.toString());
+//     return response;
+// }
+
+
+
+public ChaDashboardResponseDTO getCHPsByCHA(Long chaId) {
+    // STEP 1: Get CU IDs mapped to this CHA
+    List<Long> cuIds = chaCuMappingRepository.findByChaId(chaId).stream()
+        .map(ChaCuMapping::getCommunityUnitId)
+        .distinct()
+        .collect(Collectors.toList());
+
+    if (cuIds.isEmpty()) return new ChaDashboardResponseDTO();
+
+    // STEP 2: Get all CHP IDs mapped to those CU IDs
+    List<Long> chpIds = chpCuMappingRepository.findByCommunityUnitIdIn(cuIds).stream()
+        .map(ChpCuMapping::getChpId)
+        .distinct()
+        .collect(Collectors.toList());
+
+    if (chpIds.isEmpty()) return new ChaDashboardResponseDTO();
+
+    // Now delegate to the existing logic you had:
+    return computeChaDashboardFromChpIds(chpIds);
+}
+
+
+
+private ChaDashboardResponseDTO computeChaDashboardFromChpIds(List<Long> chpIds) {
     YearMonth currentMonth = YearMonth.now();
     LocalDateTime startOfMonth = currentMonth.atDay(1).atStartOfDay();
     LocalDateTime endOfMonth = currentMonth.atEndOfMonth().atTime(23, 59, 59);
@@ -328,8 +550,8 @@ public ChpCuMappingResponseDTO mapChpToCu(ChpCuMappingRequestDTO request) {
         dto.setChpUsername(user.getUsername());
         dto.setChpEmail(user.getEmail());
 
-        List<CommodityRecordDTO> records = commodityRecordRepository.findByChp_Id(user.getId())
-            .stream().map(record -> {
+        List<CommodityRecordDTO> records = commodityRecordRepository.findByChp_Id(user.getId()).stream()
+            .map(record -> {
                 CommodityRecordDTO recDto = new CommodityRecordDTO();
                 recDto.setId(record.getId());
                 recDto.setStockOnHand(record.getStockOnHand());
@@ -383,33 +605,31 @@ public ChpCuMappingResponseDTO mapChpToCu(ChpCuMappingRequestDTO request) {
 
         ChpDashboardStatsDTO stats = new ChpDashboardStatsDTO();
         stats.setTotalRecords(records.size());
-        stats.setTotalIssued(records.stream().mapToInt(r -> r.getQuantityIssued() != null ? r.getQuantityIssued() : 0).sum());
-        stats.setTotalConsumed(records.stream().mapToInt(r -> r.getQuantityConsumed() != null ? r.getQuantityConsumed() : 0).sum());
-        stats.setTotalExpired(records.stream().mapToInt(r -> r.getQuantityExpired() != null ? r.getQuantityExpired() : 0).sum());
-        stats.setTotalDamaged(records.stream().mapToInt(r -> r.getQuantityDamaged() != null ? r.getQuantityDamaged() : 0).sum());
+        stats.setTotalIssued(records.stream().mapToInt(r -> Optional.ofNullable(r.getQuantityIssued()).orElse(0)).sum());
+        stats.setTotalConsumed(records.stream().mapToInt(r -> Optional.ofNullable(r.getQuantityConsumed()).orElse(0)).sum());
+        stats.setTotalExpired(records.stream().mapToInt(r -> Optional.ofNullable(r.getQuantityExpired()).orElse(0)).sum());
+        stats.setTotalDamaged(records.stream().mapToInt(r -> Optional.ofNullable(r.getQuantityDamaged()).orElse(0)).sum());
 
-        List<String> outOfStock = records.stream()
-            .filter(r -> r.getStockOnHand() != null && r.getStockOnHand() < 1)
+        List<String> outOfStock = records.stream().filter(r -> r.getStockOnHand() != null && r.getStockOnHand() < 1)
             .map(CommodityRecordDTO::getCommodityName).distinct().toList();
         stats.setOutOfStockCommodities(outOfStock);
         stats.setTotalOutOfStock(outOfStock.size());
 
         List<String> toReorder = records.stream()
-            .filter(r -> r.getQuantityToOrder() != null && r.getQuantityToOrder() > 0)
+            .filter(r -> Optional.ofNullable(r.getQuantityToOrder()).orElse(0) > 0)
             .map(CommodityRecordDTO::getCommodityName).distinct().toList();
         stats.setCommoditiesToReorder(toReorder);
 
         List<String> inExcess = records.stream()
-            .filter(r -> r.getExcessQuantityReturned() != null && r.getExcessQuantityReturned() > 0)
+            .filter(r -> Optional.ofNullable(r.getExcessQuantityReturned()).orElse(0) > 0)
             .map(CommodityRecordDTO::getCommodityName).distinct().toList();
         stats.setCommoditiesInExcess(inExcess);
 
         List<String> slowMoving = records.stream()
-            .filter(r -> r.getQuantityConsumed() != null && r.getQuantityConsumed() < 5)
+            .filter(r -> Optional.ofNullable(r.getQuantityConsumed()).orElse(0) < 5)
             .map(CommodityRecordDTO::getCommodityName).distinct().toList();
         stats.setSlowMovingCommodities(slowMoving);
 
-        // Forecast
         Map<String, Double> forecast = records.stream()
             .filter(r -> r.getQuantityConsumed() != null && r.getConsumptionPeriod() != null && r.getConsumptionPeriod() > 0)
             .collect(Collectors.groupingBy(
@@ -418,25 +638,11 @@ public ChpCuMappingResponseDTO mapChpToCu(ChpCuMappingRequestDTO request) {
             ));
         stats.setForecast(forecast);
 
-        // CHP Advice
+        // Advice
         StringBuilder advice = new StringBuilder();
         boolean hasThisMonthRecord = records.stream().anyMatch(r ->
             r.getRecordDate() != null && !r.getRecordDate().isBefore(startOfMonth) && !r.getRecordDate().isAfter(endOfMonth));
-
-        if (!hasThisMonthRecord) {
-            advice.append("No records submitted for this month. ");
-        }
-
-        Set<String> allCommodities = records.stream().map(CommodityRecordDTO::getCommodityName)
-            .filter(Objects::nonNull).collect(Collectors.toSet());
-
-        Set<String> userCommodities = new HashSet<>(allCommodities); // copy for comparison
-        allCommodities.removeAll(userCommodities);
-
-        if (!allCommodities.isEmpty()) {
-            advice.append("Missing records for commodities: ").append(String.join(", ", allCommodities)).append(". ");
-        }
-
+        if (!hasThisMonthRecord) advice.append("No records submitted for this month. ");
         if (!toReorder.isEmpty()) advice.append("Reorder: ").append(String.join(", ", toReorder)).append(". ");
         if (!inExcess.isEmpty()) advice.append("Excess: ").append(String.join(", ", inExcess)).append(". ");
         if (!slowMoving.isEmpty()) advice.append("Slow moving: ").append(String.join(", ", slowMoving)).append(". ");
@@ -450,15 +656,16 @@ public ChpCuMappingResponseDTO mapChpToCu(ChpCuMappingRequestDTO request) {
 
     // CHA-level stats
     List<CommodityRecordDTO> allRecords = chpDtos.stream()
-        .flatMap(c -> c.getCommodityRecords().stream()).collect(Collectors.toList());
+        .flatMap(c -> c.getCommodityRecords().stream())
+        .collect(Collectors.toList());
 
     ChaDashboardStatsDTO chaStats = new ChaDashboardStatsDTO();
     chaStats.setTotalRecords(allRecords.size());
-    chaStats.setTotalIssued(allRecords.stream().mapToInt(r -> r.getQuantityIssued() != null ? r.getQuantityIssued() : 0).sum());
-    chaStats.setTotalConsumed(allRecords.stream().mapToInt(r -> r.getQuantityConsumed() != null ? r.getQuantityConsumed() : 0).sum());
-    chaStats.setTotalExpired(allRecords.stream().mapToInt(r -> r.getQuantityExpired() != null ? r.getQuantityExpired() : 0).sum());
-    chaStats.setTotalDamaged(allRecords.stream().mapToInt(r -> r.getQuantityDamaged() != null ? r.getQuantityDamaged() : 0).sum());
-    chaStats.setTotalClosingBalance(allRecords.stream().mapToInt(r -> r.getClosingBalance() != null ? r.getClosingBalance() : 0).sum());
+    chaStats.setTotalIssued(allRecords.stream().mapToInt(r -> Optional.ofNullable(r.getQuantityIssued()).orElse(0)).sum());
+    chaStats.setTotalConsumed(allRecords.stream().mapToInt(r -> Optional.ofNullable(r.getQuantityConsumed()).orElse(0)).sum());
+    chaStats.setTotalExpired(allRecords.stream().mapToInt(r -> Optional.ofNullable(r.getQuantityExpired()).orElse(0)).sum());
+    chaStats.setTotalDamaged(allRecords.stream().mapToInt(r -> Optional.ofNullable(r.getQuantityDamaged()).orElse(0)).sum());
+    chaStats.setTotalClosingBalance(allRecords.stream().mapToInt(r -> Optional.ofNullable(r.getClosingBalance()).orElse(0)).sum());
 
     List<String> chpsNoRecordThisMonth = chpDtos.stream()
         .filter(c -> c.getCommodityRecords().stream()
@@ -480,6 +687,5 @@ public ChpCuMappingResponseDTO mapChpToCu(ChpCuMappingRequestDTO request) {
     response.setAdvice(chaAdvice.toString());
     return response;
 }
-
 
 }

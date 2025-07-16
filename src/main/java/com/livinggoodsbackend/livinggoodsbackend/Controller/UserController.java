@@ -160,6 +160,19 @@ public class UserController {
             return ResponseEntity.ok(userService.getChpDetailsByCommunityUnit(communityUnitId));
         }
 
+        // @GetMapping("/cha/{chaId}/chps")
+        // public ResponseEntity<List<ChpBasicInfoDTO>> getChpsByCha(@PathVariable Long chaId) {
+        //     List<ChpBasicInfoDTO> chps = userService.getChpsByCha(chaId);
+        //     return ResponseEntity.ok(chps);
+        // }
+
+          @GetMapping("/cha/{chaId}/chps")
+    public ResponseEntity<ChaDashboardResponseDTO> getChpsForCha(@PathVariable Long chaId) {
+        ChaDashboardResponseDTO response = userService.getCHPsByCHA(chaId);
+        return ResponseEntity.ok(response);
+    }
+
+
         @GetMapping("/cha/{chaId}/cus/details")
         public ResponseEntity<List<CuBasicInfoDTO>> getCuDetails(@PathVariable Long chaId) {
             return ResponseEntity.ok(userService.getCommunityUnitDetailsByCha(chaId));
