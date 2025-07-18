@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.livinggoodsbackend.livinggoodsbackend.Model.ChaCuMapping;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Commodity;
 import com.livinggoodsbackend.livinggoodsbackend.Model.CommodityRecord;
 import com.livinggoodsbackend.livinggoodsbackend.Model.CommodityStockHistory;
@@ -18,6 +19,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Model.Facility;
 import com.livinggoodsbackend.livinggoodsbackend.Model.SubCounty;
 import com.livinggoodsbackend.livinggoodsbackend.Model.User;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Ward;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaCuMappingRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.ChangeType;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityRecordRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityStockHistoryRepository;
@@ -27,6 +29,8 @@ import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateCommodityRecordRequest;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CommodityRecordDTO;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
+
+
 
 
 @Service
@@ -46,6 +50,8 @@ public class CommodityRecordService {
     private CommodityStockHistoryRepository stockHistoryRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ChaCuMappingRepository chaCuMappingRepository;
 
     
    public List<CommodityRecordDTO> getAllRecords() {
@@ -202,31 +208,52 @@ private CommodityRecordDTO convertToDTO(CommodityRecord record) {
 
     // ✅ Add location hierarchy info
     Facility facility = cu.getLinkFacility();
-if (facility != null) {
-    dto.setFacilityId(facility.getId());
-    dto.setFacilityName(facility.getName());
+    if (facility != null) {
+        dto.setFacilityId(facility.getId());
+        dto.setFacilityName(facility.getName());
 
-    Ward ward = facility.getWard();
-    if (ward != null) {
-        dto.setWardId(ward.getId());
-        dto.setWardName(ward.getName()); // <- this is what you want
+        Ward ward = facility.getWard();
+        if (ward != null) {
+            dto.setWardId(ward.getId());
+            dto.setWardName(ward.getName());
 
-        SubCounty subCounty = ward.getSubCounty();
-        if (subCounty != null) {
-            dto.setSubCountyId(subCounty.getId());
-            dto.setSubCountyName(subCounty.getName());
+            SubCounty subCounty = ward.getSubCounty();
+            if (subCounty != null) {
+                dto.setSubCountyId(subCounty.getId());
+                dto.setSubCountyName(subCounty.getName());
 
-            County county = subCounty.getCounty();
-            if (county != null) {
-                dto.setCountyId(county.getId());
-                dto.setCountyName(county.getName());
+                County county = subCounty.getCounty();
+                if (county != null) {
+                    dto.setCountyId(county.getId());
+                    dto.setCountyName(county.getName());
+                }
             }
         }
     }
+
+  Long cuId = record.getCommunityUnit().getId();
+List<ChaCuMapping> mappings = chaCuMappingRepository.findByCommunityUnitId(cuId);
+
+if (mappings != null && !mappings.isEmpty()) {
+    ChaCuMapping mapping = mappings.get(0); // if only one CHA per CU
+
+    if (mapping.getChaId() != null) {
+        userRepository.findById(mapping.getChaId()).ifPresentOrElse(cha -> {
+            dto.setChaName(cha.getUsername()); // or cha.getUsername()
+        }, () -> {
+            dto.setChaName("CHA Not Found");
+        });
+    } else {
+        dto.setChaName("CHA ID Missing");
+    }
+} else {
+    dto.setChaName("Unmapped CHA");
 }
+
 
 
     return dto;
 }
+
 
 }
