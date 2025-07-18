@@ -11,6 +11,7 @@ import lombok.Data;
 public class CommodityUnitDTO {
     private Long id;
     private String chaName;
+    private Long chaId;
     private String communityUnitName;
     private Integer totalChps;
     private String countyName;

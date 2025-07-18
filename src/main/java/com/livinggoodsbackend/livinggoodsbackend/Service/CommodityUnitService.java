@@ -1,6 +1,7 @@
 package com.livinggoodsbackend.livinggoodsbackend.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -8,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.livinggoodsbackend.livinggoodsbackend.Model.ChaCuMapping;
 import com.livinggoodsbackend.livinggoodsbackend.Model.CommodityUnit;
 import com.livinggoodsbackend.livinggoodsbackend.Model.County;
 import com.livinggoodsbackend.livinggoodsbackend.Model.Facility;
@@ -26,6 +28,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.WardRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.FacilityRepository;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaCuMappingRepository;
 
 @Service
 public class CommodityUnitService {
@@ -48,6 +51,8 @@ public class CommodityUnitService {
     private CommodityRecordRepository commodityRecordRepository;
 
     private UserRepository userRepository;
+    @Autowired
+    private ChaCuMappingRepository chaCuMappingRepository;
 
     private CommodityUnitDTO convertToDTO(CommodityUnit unit) {
         CommodityUnitDTO dto = new CommodityUnitDTO();
@@ -74,6 +79,27 @@ public class CommodityUnitService {
             .map(this::convertToDTO)
             .collect(Collectors.toList());
     }
+
+
+
+
+    public List<CommodityUnitDTO> getCommunityUnitsByCha(Long chaId) {
+    // Step 1: Get CU IDs mapped to the CHA
+    List<Long> cuIds = chaCuMappingRepository.findByChaId(chaId).stream()
+            .map(ChaCuMapping::getCommunityUnitId)
+            .distinct()
+            .collect(Collectors.toList());
+
+    if (cuIds.isEmpty()) {
+        return Collections.emptyList(); // No CUs for this CHA
+    }
+
+    // Step 2: Fetch only the CUs by ID
+    return communityUnitRepository.findAllById(cuIds).stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+}
+
     
     public Optional<CommodityUnitDTO> getCommunityUnitById(Long id) {
         return communityUnitRepository.findById(id)
