@@ -549,6 +549,7 @@ private ChaDashboardResponseDTO computeChaDashboardFromChpIds(List<Long> chpIds)
         dto.setChpId(user.getId());
         dto.setChpUsername(user.getUsername());
         dto.setChpEmail(user.getEmail());
+        dto.setPhoneNumber(user.getPhoneNumber());
 
         List<CommodityRecordDTO> records = commodityRecordRepository.findByChp_Id(user.getId()).stream()
             .map(record -> {
