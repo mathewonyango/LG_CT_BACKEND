@@ -73,5 +73,11 @@ public class CommodityRecord {
     @ManyToOne
     @JoinColumn(name = "chp_id")
     private User chp;
-    // Additional fields can be added as needed
+
+    //chaName is the username of the Community Health Assistant (CHA)
+    @ManyToOne
+    @JoinColumn(name = "cha_id")
+    private User chaName; // Name of the Community Health Assistant (CHA)
+    
+
 }

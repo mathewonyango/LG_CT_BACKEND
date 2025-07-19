@@ -36,7 +36,8 @@ public class CommodityRecordDTO {
     private LocalDateTime earliestExpiryDate;
     private Integer quantityToOrder;
     private String chaName; 
-    private User chp;
+    // private User chp;
+    private String chpUsername; // Username of the CHPs
 
     // private Integer totalCHPsCounted; // Total CHPs counted for the record
     private Integer createdBy; // ID of the user creating the record
