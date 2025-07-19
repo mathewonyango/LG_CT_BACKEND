@@ -201,10 +201,6 @@ private CommodityRecordDTO convertToDTO(CommodityRecord record) {
         dto.setChaName("N/A"); // Optional fallback — or leave it null
     }
     
-
-  
-
-
     // ✅ Other fields
     dto.setCommunityUnitId(record.getCommunityUnit().getId());
     dto.setCommunityUnitName(record.getCommunityUnit().getCommunityUnitName());
