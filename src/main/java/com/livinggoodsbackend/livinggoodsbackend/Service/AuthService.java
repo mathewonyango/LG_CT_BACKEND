@@ -22,6 +22,9 @@ import java.security.Key;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+//kafka
+import com.livinggoodsbackend.livinggoodsbackend.Service.UserKafkaProducer;
+
 
 @Service
 public class AuthService {
@@ -34,6 +37,9 @@ public class AuthService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserKafkaProducer userKafkaProducer;
 
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
@@ -72,6 +78,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         String token = generateToken(savedUser);
+        userKafkaProducer.sendUserToKafka(savedUser);
 
         return new LoginResponse(token, savedUser.getUsername(), savedUser.getId(), savedUser.getRole());
     }

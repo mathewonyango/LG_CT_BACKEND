@@ -43,6 +43,9 @@ import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardResponseDTO;
 //
 import com.livinggoodsbackend.livinggoodsbackend.Service.CommodityUnitService;
+import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
+import com.livinggoodsbackend.livinggoodsbackend.Service.UserKafkaProducer;
+import com.livinggoodsbackend.livinggoodsbackend.Service.UserKafkaConsumer;
 
 @RestController
 @RequestMapping("/api/users")
@@ -53,6 +56,13 @@ public class UserController {
 
     @Autowired
     private CommodityUnitService commodityUnitService;
+    @Autowired
+    private UserKafkaProducer userKafkaProducer;
+
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserKafkaConsumer userKafkaConsumer;
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
@@ -92,25 +102,6 @@ public class UserController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse(false, "User not found", null)));
     }
-    // Update user
-    // @PutMapping("/{id}")
-    // public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User
-    // userDetails) {
-    // try {
-    // User updatedUser = userService.updateUser(id, userDetails);
-    // return ResponseEntity.ok(new ApiResponse(
-    // true,
-    // "User updated successfully",
-    // updatedUser
-    // ));
-    // } catch (IllegalArgumentException e) {
-    // return ResponseEntity.badRequest()
-    // .body(new ApiResponse(false, e.getMessage(), null));
-    // } catch (RuntimeException e) {
-    // return ResponseEntity.status(HttpStatus.NOT_FOUND)
-    // .body(new ApiResponse(false, e.getMessage(), null));
-    // }
-    // }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
@@ -127,11 +118,6 @@ public class UserController {
                     .body(new ApiResponse(false, "Error deleting user: " + e.getMessage()));
         }
     }
-
-    // @GetMapping("/role/{role}")
-    // public ResponseEntity<List<User>> getUsersByRole(@PathVariable Role role) {
-    // return ResponseEntity.ok(userService.getUsersByRole(role));
-    // }
 
     @GetMapping("/username/{username}")
     public ResponseEntity<?> getUserByUsername(@PathVariable String username) {
@@ -167,13 +153,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getChpDetailsByCommunityUnit(communityUnitId));
     }
 
-    // @GetMapping("/cha/{chaId}/chps")
-    // public ResponseEntity<List<ChpBasicInfoDTO>> getChpsByCha(@PathVariable Long
-    // chaId) {
-    // List<ChpBasicInfoDTO> chps = userService.getChpsByCha(chaId);
-    // return ResponseEntity.ok(chps);
-    // }
-
+  
     @GetMapping("/cha/{chaId}/chps")
     public ResponseEntity<ChaDashboardResponseDTO> getChpsForCha(@PathVariable Long chaId) {
         ChaDashboardResponseDTO response = userService.getCHPsByCHA(chaId);
@@ -203,5 +183,23 @@ public class UserController {
         return ResponseEntity.ok(userService.mapChpToCu(request));
     }
 
-    
+    // Kafka Implementation
+
+    // 2. Send all users to Kafka
+    @PostMapping("/send-to-kafka")
+    public ResponseEntity<String> sendAllUsersToKafka() {
+        System.out.println("\n=== SENDING USERS TO KAFKA ===");
+
+        List<User> users = userRepository.findAll();
+        userKafkaProducer.sendAllUsersToKafka(users);
+
+        return ResponseEntity.ok("Sent " + users.size() + " users to Kafka");
+    }
+      @GetMapping("/from-kafka")
+    public List<User> getAllUsersFromKafka() {
+        List<User> users = userKafkaConsumer.getAllReceivedUsers();
+        System.out.println("📥 RETURNING " + users.size() + " USERS FROM KAFKA");
+        return users;
+    }
+
 }

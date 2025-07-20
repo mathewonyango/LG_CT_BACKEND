@@ -52,6 +52,8 @@ public class AuthController {
                     "Registration successful",
                     response
                 ));
+
+                
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                 .body(new ApiResponse(false, e.getMessage(), null));
