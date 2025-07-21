@@ -198,7 +198,7 @@ public class UserController {
       @GetMapping("/from-kafka")
     public List<User> getAllUsersFromKafka() {
         List<User> users = userKafkaConsumer.getAllReceivedUsers();
-        System.out.println("📥 RETURNING " + users.size() + " USERS FROM KAFKA");
+        // System.out.println("📥 RETURNING " + users.size() + " USERS FROM KAFKA");
         return users;
     }
 

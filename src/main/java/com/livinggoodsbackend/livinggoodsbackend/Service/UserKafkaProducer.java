@@ -17,14 +17,14 @@ public class UserKafkaProducer {
     private KafkaTemplate<String, User> kafkaTemplate;
     
     public void sendAllUsersToKafka(List<User> users) {
-        System.out.println("🚀 SENDING " + users.size() + " USERS TO KAFKA...");
+        // System.out.println("🚀 SENDING " + users.size() + " USERS TO KAFKA...");
         
         for (User user : users) {
             kafkaTemplate.send(TOPIC, user);
-            System.out.println("🚀 Sent: " + user);
+            // System.out.println("🚀 Sent: " + user);
         }
         
-        System.out.println("🎉 ALL " + users.size() + " USERS SENT TO KAFKA!");
+        // System.out.println("🎉 ALL " + users.size() + " USERS SENT TO KAFKA!");
     }
 
     public void sendUserToKafka(User user) {
