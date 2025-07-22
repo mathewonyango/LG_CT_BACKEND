@@ -1,21 +1,94 @@
 version: '3.8'
+
 services:
+  postgres:
+    image: postgres:15
+    container_name: lg_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin@123
+      POSTGRES_DB: commodity_tracker
+    ports:
+      - "5432:5432"
+    networks:
+      - kg_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d commodity_tracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
+    image: wurstmeister/zookeeper:latest
+    container_name: lg_zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - kg_network
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
 
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
+    image: wurstmeister/kafka:latest 
+    container_name: lg_kafka
     ports:
       - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      - "29092:29092"
+    networks:
+      - kg_network
     depends_on:
       - zookeeper
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "user-events:1:1,commodity-events:1:1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: on-failure
+
+  backend:
+    build: .
+    container_name: lg_backend
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - kg_network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/commodity_tracker
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin@123
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+networks:
+  kg_network:
+    name: kg_network  
+    driver: bridge
+
+volumes:
+  postgres_data:
