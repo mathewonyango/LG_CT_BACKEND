@@ -73,7 +73,7 @@ services:
       - kafka
 
   frontend:
-    image: node:18
+    image: node:20-slim
     working_dir: /app
     volumes:
       - ./frontend:/app
@@ -134,7 +134,7 @@ body="$2"
 curl -s -X POST http://localhost:9000/api/v1/notify/email \
 -H "Content-Type: application/json" \
 -d '{
-  "to": "saccounaitas7@gmail.com",
+  "to": "mathewsagumbah@gmail.com",
   "subject": "'"${subject}"'",
   "body": "'"${body}"'"
 }'
