@@ -37,6 +37,7 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.CuBasicInfoDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingRequestDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.UpdateUserRequest;
+import com.livinggoodsbackend.livinggoodsbackend.dto.UserKafkaDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.UserResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
 import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
@@ -44,8 +45,6 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardResponseDTO;
 //
 import com.livinggoodsbackend.livinggoodsbackend.Service.CommodityUnitService;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
-import com.livinggoodsbackend.livinggoodsbackend.Service.UserKafkaProducer;
-import com.livinggoodsbackend.livinggoodsbackend.Service.UserKafkaConsumer;
 
 @RestController
 @RequestMapping("/api/users")
@@ -56,13 +55,11 @@ public class UserController {
 
     @Autowired
     private CommodityUnitService commodityUnitService;
-    @Autowired
-    private UserKafkaProducer userKafkaProducer;
+
 
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private UserKafkaConsumer userKafkaConsumer;
+ 
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
@@ -183,23 +180,6 @@ public class UserController {
         return ResponseEntity.ok(userService.mapChpToCu(request));
     }
 
-    // Kafka Implementation
 
-    // 2. Send all users to Kafka
-    @PostMapping("/send-to-kafka")
-    public ResponseEntity<String> sendAllUsersToKafka() {
-        System.out.println("\n=== SENDING USERS TO KAFKA ===");
-
-        List<User> users = userRepository.findAll();
-        userKafkaProducer.sendAllUsersToKafka(users);
-
-        return ResponseEntity.ok("Sent " + users.size() + " users to Kafka");
-    }
-      @GetMapping("/from-kafka")
-    public List<User> getAllUsersFromKafka() {
-        List<User> users = userKafkaConsumer.getAllReceivedUsers();
-        // System.out.println("📥 RETURNING " + users.size() + " USERS FROM KAFKA");
-        return users;
-    }
 
 }

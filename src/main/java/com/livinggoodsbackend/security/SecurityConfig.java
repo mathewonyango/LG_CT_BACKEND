@@ -40,6 +40,8 @@ public class SecurityConfig {
                     // List specific origins for credentials support
                     .allowedOrigins(
                         "http://localhost:3000",
+                        "http://localhost:9001",  // ← Add this line for your frontend
+
                         "http://localhost:8080", 
                         "http://localhost:8081",
                         "http://localhost:8100",

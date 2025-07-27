@@ -47,6 +47,9 @@ import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundExcep
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardStatsDTO;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaCuMappingRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.ChpCuMappingRepository;
+//kaka
+import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityUnitRepository;
+import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 import jakarta.transaction.Transactional;
 
@@ -78,6 +81,15 @@ public class UserService {
 
     @Autowired
     private CommodityUnitRepository communityUnitRepository;
+
+    @Autowired
+    private final KafkaProducerService kafkaProducerService;
+
+ 
+    public UserService(KafkaProducerService kafkaProducerService) {
+        this.kafkaProducerService = kafkaProducerService;
+    }
+
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -439,7 +451,9 @@ private ChaDashboardResponseDTO computeChaDashboardFromChpIds(List<Long> chpIds)
     response.setChps(chpDtos);
     response.setStats(chaStats);
     response.setAdvice(chaAdvice.toString());
+    kafkaProducerService.sendMessage("cha-dashboard", response);
     return response;
+    
 }
 
 }

@@ -8,6 +8,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
 import com.livinggoodsbackend.livinggoodsbackend.dto.LoginRequest;
 import com.livinggoodsbackend.livinggoodsbackend.dto.LoginResponse;
 import com.livinggoodsbackend.livinggoodsbackend.dto.RegisterRequest;
+import com.livinggoodsbackend.livinggoodsbackend.dto.UserKafkaDTO;
 import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 import com.livinggoodsbackend.livinggoodsbackend.exception.AuthenticationException;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
@@ -23,7 +24,7 @@ import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 //kafka
-import com.livinggoodsbackend.livinggoodsbackend.Service.UserKafkaProducer;
+import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 
 @Service
@@ -39,7 +40,12 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private UserKafkaProducer userKafkaProducer;
+    private KafkaProducerService kafkaProducerService;
+
+    
+    public AuthService(KafkaProducerService kafkaProducerService) {
+        this.kafkaProducerService = kafkaProducerService;
+    }
 
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
@@ -78,8 +84,13 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         String token = generateToken(savedUser);
-        userKafkaProducer.sendUserToKafka(savedUser);
 
+            UserKafkaDTO kafkaDTO = new UserKafkaDTO(
+            user.getUsername(),
+            user.getEmail(),
+            user.getPhoneNumber()
+        );
+        kafkaProducerService.sendMessage("user-events", kafkaDTO);
         return new LoginResponse(token, savedUser.getUsername(), savedUser.getId(), savedUser.getRole());
     }
 

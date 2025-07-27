@@ -23,7 +23,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disable CSRF for development
             .cors(cors -> cors.disable()) // Disable CORS in Security (we'll handle it in WebMvcConfigurer)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**", "/uploads/**").permitAll()
+            .requestMatchers("/ws/**").permitAll() 
+            
+            .requestMatchers("/api/**", "/uploads/**").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic();

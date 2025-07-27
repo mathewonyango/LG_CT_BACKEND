@@ -20,6 +20,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    restart: unless-stopped
 
   zookeeper:
     image: wurstmeister/zookeeper:latest
@@ -31,6 +32,8 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+
+      restart: unless-stopped
 
   kafka:
     image: wurstmeister/kafka:latest 
@@ -49,14 +52,37 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_CREATE_TOPICS: "user-events:1:1,commodity-events:1:1"
+      KAFKA_MESSAGE_MAX_BYTES: 200000000
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 200000000
+      KAFKA_MAX_REQUEST_SIZE: 200000000
+      KAFKA_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_LEADER_REBALANCE_ENABLE: "true"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_DELETE_TOPIC_ENABLE: "false"
+      
+
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    restart: on-failure
+    restart: unless-stopped
+    # //Kafka UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka_ui
+    ports:
+      - "8085:8080"
+    depends_on:
+      - kafka
+    networks:
+      - kg_network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    restart: unless-stopped
 
   backend:
     build: .
@@ -77,7 +103,8 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
-    restart: on-failure
+    restart: unless-stopped
+    
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9000/actuator/health || exit 1"]
       interval: 30s
