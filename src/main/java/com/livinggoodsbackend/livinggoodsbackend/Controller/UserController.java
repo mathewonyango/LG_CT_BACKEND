@@ -34,6 +34,8 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.ChpDashboardDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CommodityUnitDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateUserRequest;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CuBasicInfoDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ManagerCountyMappingRequestDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ManagerCountyMappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingRequestDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.MappingResponseDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.UpdateUserRequest;
@@ -44,7 +46,13 @@ import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ChaDashboardResponseDTO;
 //
 import com.livinggoodsbackend.livinggoodsbackend.Service.CommodityUnitService;
+import com.livinggoodsbackend.livinggoodsbackend.Service.ManagerCountyMappingService;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.UserRepository;
+
+
+import com.livinggoodsbackend.livinggoodsbackend.Service.ManagerCountyMappingService;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ManagerCountyMappingRequestDTO;
+import com.livinggoodsbackend.livinggoodsbackend.dto.ManagerCountyMappingResponseDTO;
 
 @RestController
 @RequestMapping("/api/users")
@@ -59,6 +67,10 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    
+  @Autowired
+    private ManagerCountyMappingService ManagerCountyMappingService;
  
 
     @GetMapping
@@ -179,7 +191,5 @@ public class UserController {
     public ResponseEntity<ChpCuMappingResponseDTO> mapChpToCu(@RequestBody ChpCuMappingRequestDTO request) {
         return ResponseEntity.ok(userService.mapChpToCu(request));
     }
-
-
 
 }
