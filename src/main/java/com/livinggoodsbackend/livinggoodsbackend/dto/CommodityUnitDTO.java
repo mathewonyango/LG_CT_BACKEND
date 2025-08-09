@@ -19,6 +19,7 @@ public class CommodityUnitDTO {
     private String wardName;
     private Long linkFacilityId;
     private Integer createdBy;
+    private Long countyId; // Add this
     // private String createdByUsername;
     private LocalDateTime createdAt;
     // private String wardName;

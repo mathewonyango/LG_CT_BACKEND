@@ -61,6 +61,8 @@ public class CommodityUnitService {
         dto.setCommunityUnitName(unit.getCommunityUnitName());
         dto.setTotalChps(unit.getTotalChps());
         dto.setCountyName(unit.getCounty() != null ? unit.getCounty().getName() : null);
+        //county id
+        dto.setCountyId(unit.getCounty() != null ? unit.getCounty().getId() : null);
         dto.setSubCountyId(unit.getSubCounty() != null ? unit.getSubCounty().getId() : null);
         dto.setWardName(unit.getWard() != null ? unit.getWard().getName() : null);
         dto.setLinkFacilityId(unit.getLinkFacility() != null ? unit.getLinkFacility().getId() : null);
