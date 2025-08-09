@@ -49,7 +49,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaCuMappingReposito
 import com.livinggoodsbackend.livinggoodsbackend.Repository.ChpCuMappingRepository;
 //kaka
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityUnitRepository;
-import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
+// import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 import jakarta.transaction.Transactional;
 
@@ -82,13 +82,13 @@ public class UserService {
     @Autowired
     private CommodityUnitRepository communityUnitRepository;
 
-    @Autowired
-    private final KafkaProducerService kafkaProducerService;
+    // @Autowired
+    // private final KafkaProducerService kafkaProducerService;
 
  
-    public UserService(KafkaProducerService kafkaProducerService) {
-        this.kafkaProducerService = kafkaProducerService;
-    }
+    // public UserService(KafkaProducerService kafkaProducerService) {
+    //     this.kafkaProducerService = kafkaProducerService;
+    // }
 
 
     public List<User> getAllUsers() {
@@ -451,7 +451,7 @@ private ChaDashboardResponseDTO computeChaDashboardFromChpIds(List<Long> chpIds)
     response.setChps(chpDtos);
     response.setStats(chaStats);
     response.setAdvice(chaAdvice.toString());
-    kafkaProducerService.sendMessage("cha-dashboard", response);
+    // kafkaProducerService.sendMessage("cha-dashboard", response);
     return response;
     
 }
