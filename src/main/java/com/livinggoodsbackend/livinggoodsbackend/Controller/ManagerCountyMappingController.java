@@ -32,7 +32,7 @@ public class ManagerCountyMappingController {
     public List<ManagerCountyMappingResponseDTO> getMappingsByManager(@PathVariable Long managerId) {
         return service.getMappingsByManager(managerId);
     }
-    @GetMapping("/managers")
+    @GetMapping("/managers/mappings")
     public ResponseEntity<List<ManagerCountyMappingResponseDTO>> getAllManagerCountyMappings() {
         return ResponseEntity.ok(service.getAllMappings());
     }

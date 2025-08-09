@@ -192,4 +192,9 @@ public class UserController {
         return ResponseEntity.ok(userService.mapChpToCu(request));
     }
 
+     @GetMapping("/managers")
+    public List<User> getManagers() {
+        return userService.getManagers();
+    }
+
 }

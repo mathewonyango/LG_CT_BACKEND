@@ -95,6 +95,11 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    
+    public List<User> getManagers() {
+        return userRepository.findByRole(Role.MANAGER);
+    }
+
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
