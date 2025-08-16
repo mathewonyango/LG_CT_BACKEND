@@ -14,9 +14,12 @@ import com.livinggoodsbackend.livinggoodsbackend.Repository.SubCountyRepository;
 import com.livinggoodsbackend.livinggoodsbackend.dto.SubCountyDTO;
 import com.livinggoodsbackend.livinggoodsbackend.dto.CreateSubCountyRequest;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
-import jakarta.transaction.Transactional;
+//
+//kafka pproducer
+import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 import jakarta.transaction.Transactional;
+
 
 @Service
 @Transactional
@@ -28,10 +31,17 @@ public class SubCountyService {
     @Autowired
     private CountyRepository countyRepository;
 
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+
     public List<SubCountyDTO> getAllSubCounties() {
-        return subCountyRepository.findAll().stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+
+        List <SubCountyDTO> subCounties = subCountyRepository.findAll()
+        .stream()
+        .map(this::convertToDTO)
+        .collect(Collectors.toList());
+
+        return subCounties;
     }
     
     public Optional<SubCountyDTO> getSubCountyById(Long id) {
@@ -62,6 +72,7 @@ public class SubCountyService {
 
         // Save and convert to DTO
         SubCounty savedSubCounty = subCountyRepository.save(subCounty);
+        kafkaProducerService.sendMessage("sub-county", savedSubCounty.getId().toString(), savedSubCounty);
         return convertToDTO(savedSubCounty);
     }
     
@@ -76,6 +87,7 @@ public class SubCountyService {
         subCounty.setCounty(county);
         
         SubCounty updated = subCountyRepository.save(subCounty);
+        kafkaProducerService.sendMessage("sub-county", updated.getId().toString(), updated);
         return convertToDTO(updated);
     }
     

@@ -26,10 +26,11 @@ public class WardService {
     private SubCountyRepository subCountyRepository;
     
     public List<WardDTO> getAllWards() {
-        return wardRepository.findAll().stream()
+    List <WardDTO> wards = wardRepository.findAll().stream()
             .filter(ward -> ward != null)  // Filter out null wards if any
             .map(this::convertToDTO)
             .collect(Collectors.toList());
+            return wards;
     }
     
     public Optional<WardDTO> getWardById(Long id) {

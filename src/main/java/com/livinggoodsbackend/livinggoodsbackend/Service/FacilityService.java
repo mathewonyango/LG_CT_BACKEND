@@ -18,6 +18,8 @@ import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceAlreadyExists
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceInUseException;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
 
+import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
+
 import jakarta.transaction.Transactional;
 
 @Service
@@ -29,6 +31,9 @@ public class FacilityService {
 
     @Autowired
     private WardRepository wardRepository;
+
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
 
     private FacilityDTO convertToDTO(Facility facility) {
         FacilityDTO dto = new FacilityDTO();
@@ -47,9 +52,15 @@ public class FacilityService {
     }
 
     public List<FacilityDTO> getAllFacilities() {
-        return facilityRepository.findAll().stream()
+        List <FacilityDTO> facilities = facilityRepository.findAll().stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
+
+            for(FacilityDTO facility : facilities) {
+                kafkaProducerService.sendMessage("facilities", facility.getFacilityCode(),facility);
+            }
+
+            return facilities;
     }
 
     public Optional<FacilityDTO> getFacilityById(Long id) {
@@ -71,6 +82,8 @@ public class FacilityService {
         facility.setWards(wards);
 
         Facility saved = facilityRepository.save(facility);
+
+        kafkaProducerService.sendMessage("facilities", saved.getId().toString(), saved);
         return convertToDTO(saved);
     }
 
@@ -88,6 +101,8 @@ public class FacilityService {
         // facility.setFacilityCode(request.getFacilityCode());
         facility.setWards(wards);
 
+        kafkaProducerService.sendMessage("facilities", facility.getId().toString(), facility);
+
         return convertToDTO(facilityRepository.save(facility));
     }
 
@@ -97,6 +112,7 @@ public class FacilityService {
         }
         try {
             facilityRepository.deleteById(id);
+            kafkaProducerService.sendMessage("facilities", id.toString(), null);
         } catch (DataIntegrityViolationException e) {
             throw new ResourceInUseException("Facility is in use and cannot be deleted");
         }

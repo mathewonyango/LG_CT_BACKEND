@@ -16,6 +16,7 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.UserDTO;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
 import com.livinggoodsbackend.livinggoodsbackend.Service.UserService;
 import com.livinggoodsbackend.livinggoodsbackend.Service.CountyService;
+ import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 import org.springframework.stereotype.Service;
 @Service
@@ -30,6 +31,9 @@ public class ManagerCountyMappingService {
     @Autowired
     private CountyService CountyService;
 
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+
     public ManagerCountyMappingResponseDTO mapManagerToCounty(ManagerCountyMappingRequestDTO dto) {
         ManagerCountyMapping mapping = new ManagerCountyMapping();
         mapping.setManagerId(dto.getManagerId());
@@ -40,6 +44,8 @@ public class ManagerCountyMappingService {
         response.setId(saved.getId());
         response.setManagerId(saved.getManagerId());
         response.setCountyId(saved.getCountyId());
+
+        kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(saved.getId()) , response);
         return response;
     }
 
@@ -68,7 +74,7 @@ public List<ManagerCountyMappingResponseDTO> getMappingsByManager(Long managerId
                     throw new ResourceNotFoundException("County not found with ID: " + mapping.getCountyId());
                 }
             );
-
+        kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(mapping.getId()) , dto);
         return dto;
     }).collect(Collectors.toList());
 }
@@ -98,7 +104,7 @@ public List<ManagerCountyMappingResponseDTO> getAllMappings() {
                     throw new ResourceNotFoundException("County not found with ID: " + mapping.getCountyId());
                 }
             );
-
+        kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(mapping.getId()) , dto);
         return dto;
     }).collect(Collectors.toList());
 }

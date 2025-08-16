@@ -18,6 +18,7 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.CreateCategoryRequest;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceAlreadyExistsException;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceInUseException;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
+ import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -26,6 +27,9 @@ public class CommodityCategoryController {
 
     @Autowired
     private CommodityCategoryService commodityCategoryService;
+
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
 
     @GetMapping
     public ResponseEntity<?> getAllCategories() {

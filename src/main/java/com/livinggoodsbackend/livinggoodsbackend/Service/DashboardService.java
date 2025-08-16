@@ -7,6 +7,7 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.DashboardStats;
 import com.livinggoodsbackend.livinggoodsbackend.dto.DashboardStats.ConsumptionStat;
 import com.livinggoodsbackend.livinggoodsbackend.dto.DashboardStats.StockOutStat;
 import com.livinggoodsbackend.livinggoodsbackend.dto.ConsumptionProjection;
+ import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,9 @@ public class DashboardService {
 
     @Autowired
     private CommodityRecordRepository commodityRecordRepository;
+
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
 
     public DashboardStats getDashboardStats() {
         DashboardStats stats = new DashboardStats();
@@ -61,9 +65,13 @@ public class DashboardService {
                 .collect(Collectors.toList());
         stats.setTopConsumption(topConsumptionStats);
 
+      
         // Stock metrics
         stats.setTotalStockOuts(commodityRecordRepository.countCommunityUnitsWithStockOut());
         stats.setLowStockItems(commodityRecordRepository.countLowStockItems(0)); // threshold of 10
+
+        kafkaProducerService.sendMessage("admin_dashboard_stats","admin_dashboard_stats", stats); 
+
 
         return stats;
     }

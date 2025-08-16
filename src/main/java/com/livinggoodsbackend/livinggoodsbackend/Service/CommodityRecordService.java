@@ -30,6 +30,7 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.CommodityRecordDTO;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
 import com.livinggoodsbackend.livinggoodsbackend.Repository.ChaCuMappingRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Model.ChaCuMapping;
+import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 
 @Service
@@ -53,27 +54,41 @@ public class CommodityRecordService {
     @Autowired
     private ChaCuMappingRepository chaCuMappingRepository;
 
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
     
-   public List<CommodityRecordDTO> getAllRecords() {
-    return commodityRecordRepository.findAllWithLocations().stream()
+
+    
+  public List<CommodityRecordDTO> getAllRecords() {
+    List<CommodityRecordDTO> records = commodityRecordRepository.findAllWithLocations().stream()
         .map(record -> {
             CommodityRecordDTO dto = convertToDTO(record);
 
-            // Safely get createdById from community unit
-            Integer creatorId = record.getCommunityUnit() != null ? record.getCommunityUnit().getCreatedById() : null;
+            Integer creatorId = record.getCommunityUnit() != null
+                ? record.getCommunityUnit().getCreatedById()
+                : null;
             dto.setCreatedBy(creatorId);
 
-            // Set the username from the user table using createdById
             if (creatorId != null) {
                 userRepository.findById(Long.valueOf(creatorId)).ifPresent(user ->
                     dto.setCreatedByUsername(user.getUsername())
                 );
             }
 
+            // Send each record individually to Kafka with ID as key
+            kafkaProducerService.sendMessage(
+                "commodity-records",
+                String.valueOf(dto.getId()),
+                dto
+            );
+
             return dto;
         })
         .collect(Collectors.toList());
+
+    return records;
 }
+
     
     public Optional<CommodityRecordDTO> getRecordById(Long id) {
         return commodityRecordRepository.findById(id)
@@ -119,6 +134,13 @@ public class CommodityRecordService {
     // Log stock change
     createStockHistoryEntry(saved, ChangeType.ADJUSTMENT);
 
+    // Send Kafka message
+    kafkaProducerService.sendMessage(
+        "commodity-records",
+        String.valueOf(saved.getId()),
+        saved
+    );
+
     // Convert to DTO and return
     return convertToDTO(saved);
 }
@@ -142,7 +164,13 @@ public class CommodityRecordService {
         if (!Objects.equals(oldBalance, recordDetails.getClosingBalance())) {
             createStockHistoryEntry(record, ChangeType.ADJUSTMENT);
         }
-        
+
+        //kafka
+        kafkaProducerService.sendMessage(
+            "commodity-records",
+            String.valueOf(record.getId()),
+            record
+        );
         return convertToDTO(record);
     }
     
@@ -160,6 +188,11 @@ public class CommodityRecordService {
     
     public void deleteRecord(Long id) {
         commodityRecordRepository.deleteById(id);
+        kafkaProducerService.sendMessage(
+            "commodity-records",
+            String.valueOf(id),
+            null
+        );
     }
     
     public List<CommodityRecord> getRecordsByCommunityUnit(Long communityUnitId) {
@@ -167,7 +200,15 @@ public class CommodityRecordService {
     }
     
     public List<CommodityRecord> getLowStockRecords(Integer threshold) {
-        return commodityRecordRepository.findByStockOnHandLessThan(threshold);
+
+        List <CommodityRecord> records = commodityRecordRepository.findByStockOnHandLessThan(threshold);
+        //send to kafka
+        kafkaProducerService.sendMessage(
+            "low-stock-records",
+            String.valueOf(threshold),
+            records
+        );
+        return records;
     }
     
     public List<CommodityRecord> getRecordsByDateRange(LocalDateTime start, LocalDateTime end) {
