@@ -70,7 +70,7 @@ public class DashboardService {
         stats.setTotalStockOuts(commodityRecordRepository.countCommunityUnitsWithStockOut());
         stats.setLowStockItems(commodityRecordRepository.countLowStockItems(0)); // threshold of 10
 
-        kafkaProducerService.sendMessage("admin_dashboard_stats","admin_dashboard_stats", stats); 
+        // kafkaProducerService.sendMessage("admin_dashboard_stats","admin_dashboard_stats", stats); 
 
 
         return stats;

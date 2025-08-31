@@ -76,11 +76,11 @@ public class CommodityRecordService {
             }
 
             // Send each record individually to Kafka with ID as key
-            kafkaProducerService.sendMessage(
-                "commodity-records",
-                String.valueOf(dto.getId()),
-                dto
-            );
+            // kafkaProducerService.sendMessage(
+            //     "commodity-records",
+            //     String.valueOf(dto.getId()),
+            //     dto
+            // );
 
             return dto;
         })
@@ -135,11 +135,11 @@ public class CommodityRecordService {
     createStockHistoryEntry(saved, ChangeType.ADJUSTMENT);
 
     // Send Kafka message
-    kafkaProducerService.sendMessage(
-        "commodity-records",
-        String.valueOf(saved.getId()),
-        saved
-    );
+    // kafkaProducerService.sendMessage(
+    //     "commodity-records",
+    //     String.valueOf(saved.getId()),
+    //     saved
+    // );
 
     // Convert to DTO and return
     return convertToDTO(saved);
@@ -166,11 +166,11 @@ public class CommodityRecordService {
         }
 
         //kafka
-        kafkaProducerService.sendMessage(
-            "commodity-records",
-            String.valueOf(record.getId()),
-            record
-        );
+        // kafkaProducerService.sendMessage(
+        //     "commodity-records",
+        //     String.valueOf(record.getId()),
+        //     record
+        // );
         return convertToDTO(record);
     }
     
@@ -188,11 +188,11 @@ public class CommodityRecordService {
     
     public void deleteRecord(Long id) {
         commodityRecordRepository.deleteById(id);
-        kafkaProducerService.sendMessage(
-            "commodity-records",
-            String.valueOf(id),
-            null
-        );
+        // kafkaProducerService.sendMessage(
+        //     "commodity-records",
+        //     String.valueOf(id),
+        //     null
+        // );
     }
     
     public List<CommodityRecord> getRecordsByCommunityUnit(Long communityUnitId) {
@@ -203,11 +203,11 @@ public class CommodityRecordService {
 
         List <CommodityRecord> records = commodityRecordRepository.findByStockOnHandLessThan(threshold);
         //send to kafka
-        kafkaProducerService.sendMessage(
-            "low-stock-records",
-            String.valueOf(threshold),
-            records
-        );
+        // kafkaProducerService.sendMessage(
+        //     "low-stock-records",
+        //     String.valueOf(threshold),
+        //     records
+        // );
         return records;
     }
     

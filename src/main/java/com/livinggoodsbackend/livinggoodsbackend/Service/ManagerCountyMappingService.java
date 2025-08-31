@@ -45,7 +45,7 @@ public class ManagerCountyMappingService {
         response.setManagerId(saved.getManagerId());
         response.setCountyId(saved.getCountyId());
 
-        kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(saved.getId()) , response);
+        // kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(saved.getId()) , response);
         return response;
     }
 
@@ -74,7 +74,7 @@ public List<ManagerCountyMappingResponseDTO> getMappingsByManager(Long managerId
                     throw new ResourceNotFoundException("County not found with ID: " + mapping.getCountyId());
                 }
             );
-        kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(mapping.getId()) , dto);
+        // kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(mapping.getId()) , dto);
         return dto;
     }).collect(Collectors.toList());
 }
@@ -104,7 +104,7 @@ public List<ManagerCountyMappingResponseDTO> getAllMappings() {
                     throw new ResourceNotFoundException("County not found with ID: " + mapping.getCountyId());
                 }
             );
-        kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(mapping.getId()) , dto);
+        // kafkaProducerService.sendMessage("manager_county_mappings", String.valueOf(mapping.getId()) , dto);
         return dto;
     }).collect(Collectors.toList());
 }

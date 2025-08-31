@@ -50,7 +50,7 @@ public class CommodityCategoryService {
         category.setDescription(request.getDescription());
         
         CommodityCategory saved = commodityCategoryRepository.save(category);
-        kafkaProducerService.sendMessage("commodity-categories", saved.getId().toString(), saved);
+        // kafkaProducerService.sendMessage("commodity-categories", saved.getId().toString(), saved);
         return convertToDTO(saved);
     }
     
@@ -70,7 +70,7 @@ public class CommodityCategoryService {
         category.setDescription(request.getDescription());
         
         CommodityCategory updated = commodityCategoryRepository.save(category);
-        kafkaProducerService.sendMessage("commodity-categories", updated.getId().toString(), updated);
+        // kafkaProducerService.sendMessage("commodity-categories", updated.getId().toString(), updated);
         return convertToDTO(updated);
     }
     
@@ -80,7 +80,7 @@ public class CommodityCategoryService {
             
         try {
             commodityCategoryRepository.delete(category);
-            kafkaProducerService.sendMessage("commodity-categories", id.toString(), null);
+            // kafkaProducerService.sendMessage("commodity-categories", id.toString(), null);
         } catch (DataIntegrityViolationException e) {
             throw new ResourceInUseException("Category is in use and cannot be deleted");
         }

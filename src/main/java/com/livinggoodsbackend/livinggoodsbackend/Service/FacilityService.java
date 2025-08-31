@@ -57,7 +57,7 @@ public class FacilityService {
             .collect(Collectors.toList());
 
             for(FacilityDTO facility : facilities) {
-                kafkaProducerService.sendMessage("facilities", facility.getFacilityCode(),facility);
+                // kafkaProducerService.sendMessage("facilities", facility.getFacilityCode(),facility);
             }
 
             return facilities;
@@ -83,7 +83,7 @@ public class FacilityService {
 
         Facility saved = facilityRepository.save(facility);
 
-        kafkaProducerService.sendMessage("facilities", saved.getId().toString(), saved);
+        // kafkaProducerService.sendMessage("facilities", saved.getId().toString(), saved);
         return convertToDTO(saved);
     }
 
@@ -101,7 +101,7 @@ public class FacilityService {
         // facility.setFacilityCode(request.getFacilityCode());
         facility.setWards(wards);
 
-        kafkaProducerService.sendMessage("facilities", facility.getId().toString(), facility);
+        // kafkaProducerService.sendMessage("facilities", facility.getId().toString(), facility);
 
         return convertToDTO(facilityRepository.save(facility));
     }
@@ -112,7 +112,7 @@ public class FacilityService {
         }
         try {
             facilityRepository.deleteById(id);
-            kafkaProducerService.sendMessage("facilities", id.toString(), null);
+            // kafkaProducerService.sendMessage("facilities", id.toString(), null);
         } catch (DataIntegrityViolationException e) {
             throw new ResourceInUseException("Facility is in use and cannot be deleted");
         }

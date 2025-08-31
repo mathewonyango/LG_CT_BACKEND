@@ -59,7 +59,7 @@ public class AuthService {
         userRepository.save(user);
 
         String token = generateToken(user);
-        kafkaProducerService.sendMessage("user-login-event", user.getId().toString(),user);
+        // kafkaProducerService.sendMessage("user-login-event", user.getId().toString(),user);
         return new LoginResponse(token, user.getUsername(), user.getId(), user.getRole());
     }
 
@@ -91,7 +91,7 @@ public class AuthService {
             user.getEmail(),
             user.getPhoneNumber()
         );
-        kafkaProducerService.sendMessage("user-register-events",savedUser.getId().toString(), kafkaDTO);
+        // kafkaProducerService.sendMessage("user-register-events",savedUser.getId().toString(), kafkaDTO);
         return new LoginResponse(token, savedUser.getUsername(), savedUser.getId(), savedUser.getRole());
     }
 
@@ -135,7 +135,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setResetToken(null);
         user.setResetTokenExpiry(null);
-        kafkaProducerService.sendMessage("user-password-reset-event", user.getId().toString(),user);
+        // kafkaProducerService.sendMessage("user-password-reset-event", user.getId().toString(),user);
         userRepository.save(user);
     }
 

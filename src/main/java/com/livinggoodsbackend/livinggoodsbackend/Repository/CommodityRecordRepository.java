@@ -140,4 +140,6 @@ public interface CommodityRecordRepository extends JpaRepository<CommodityRecord
         WHERE cr.communityUnit.id = :communityUnitId
     """)
     Integer getTotalStockByCommunityUnitId(@Param("communityUnitId") Long communityUnitId);
+
+    List<CommodityRecord> findByChp_IdAndRecordDateBetween(Long chpId, LocalDateTime start, LocalDateTime end);
 }

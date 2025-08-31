@@ -1,5 +1,7 @@
 package com.livinggoodsbackend.livinggoodsbackend.Controller;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.livinggoodsbackend.livinggoodsbackend.Model.User;
@@ -163,11 +166,24 @@ public class UserController {
     }
 
   
-    @GetMapping("/cha/{chaId}/chps")
-    public ResponseEntity<ChaDashboardResponseDTO> getChpsForCha(@PathVariable Long chaId) {
-        ChaDashboardResponseDTO response = userService.getCHPsByCHA(chaId);
-        return ResponseEntity.ok(response);
+ @GetMapping("/cha/{chaId}/chps")
+public ResponseEntity<ChaDashboardResponseDTO> getChpsForCha(
+        @PathVariable Long chaId,
+        @RequestParam(required = false) Integer month // 1-12
+) {
+    int targetMonth;
+
+    if (month != null && month >= 1 && month <= 12) {
+        targetMonth = month;
+    } else {
+        targetMonth = LocalDate.now().getMonthValue(); // current month number
     }
+
+    ChaDashboardResponseDTO response = userService.getCHPsByCHA(chaId, targetMonth);
+    return ResponseEntity.ok(response);
+}
+
+
 
     @GetMapping("/cha/{chaId}/cus/details")
     public ResponseEntity<List<CuBasicInfoDTO>> getCuDetails(@PathVariable Long chaId) {

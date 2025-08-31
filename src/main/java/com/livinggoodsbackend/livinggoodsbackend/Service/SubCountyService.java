@@ -72,7 +72,7 @@ public class SubCountyService {
 
         // Save and convert to DTO
         SubCounty savedSubCounty = subCountyRepository.save(subCounty);
-        kafkaProducerService.sendMessage("sub-county", savedSubCounty.getId().toString(), savedSubCounty);
+        // kafkaProducerService.sendMessage("sub-county", savedSubCounty.getId().toString(), savedSubCounty);
         return convertToDTO(savedSubCounty);
     }
     
@@ -87,7 +87,7 @@ public class SubCountyService {
         subCounty.setCounty(county);
         
         SubCounty updated = subCountyRepository.save(subCounty);
-        kafkaProducerService.sendMessage("sub-county", updated.getId().toString(), updated);
+        // kafkaProducerService.sendMessage("sub-county", updated.getId().toString(), updated);
         return convertToDTO(updated);
     }
     
