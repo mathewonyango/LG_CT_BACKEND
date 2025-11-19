@@ -1,6 +1,7 @@
 package com.livinggoodsbackend.livinggoodsbackend.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.livinggoodsbackend.livinggoodsbackend.Model.User;
@@ -12,24 +13,27 @@ import com.livinggoodsbackend.livinggoodsbackend.dto.UserKafkaDTO;
 import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 import com.livinggoodsbackend.livinggoodsbackend.exception.AuthenticationException;
 import com.livinggoodsbackend.livinggoodsbackend.exception.ResourceNotFoundException;
+import com.livinggoodsbackend.livinggoodsbackend.security.JwtUtil;
+
 import java.time.LocalDateTime;
+import java.util.UUID;
+import java.io.UnsupportedEncodingException;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.mail.MessagingException;
 
-import java.io.UnsupportedEncodingException;
 import java.security.Key;
-import java.util.UUID;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-//kafka
-import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
+import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 @Service
 public class AuthService {
-    
+
     @Autowired
     private EmailService emailService;
 
@@ -42,29 +46,34 @@ public class AuthService {
     @Autowired
     private KafkaProducerService kafkaProducerService;
 
-    
-    // public AuthService(KafkaProducerService kafkaProducerService) {
-    //     this.kafkaProducerService = kafkaProducerService;
-    // }
+    @Autowired
+    private JwtUtil jwtUtil;
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    //  Inject secret from application.properties
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+
+    // ---------------- Login ----------------
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
             .orElseThrow(() -> new AuthenticationException("Invalid username or password"));
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new AuthenticationException("Invalid username or password");
         }
+
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 
         String token = generateToken(user);
-        // kafkaProducerService.sendMessage("user-login-event", user.getId().toString(),user);
-        return new LoginResponse(token, user.getUsername(), user.getId(), user.getRole());
+        return new LoginResponse(token, user.getUsername(), user.getId(), user.getRole(),user.getProfileImageUrl());
     }
 
+    // ---------------- Register ----------------
     public LoginResponse register(RegisterRequest request) {
-        // Check if username or email already exists
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new AuthenticationException("Username already exists");
         }
@@ -78,7 +87,6 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole() != null ? request.getRole() : Role.USER);
         user.setPhoneNumber(request.getPhoneNumber());
-
         user.setCreatedAt(LocalDateTime.now());
         user.setLastLogin(LocalDateTime.now());
         user.setVersion(0L);
@@ -86,25 +94,31 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         String token = generateToken(savedUser);
 
-            UserKafkaDTO kafkaDTO = new UserKafkaDTO(
-            user.getUsername(),
-            user.getEmail(),
-            user.getPhoneNumber()
+        UserKafkaDTO kafkaDTO = new UserKafkaDTO(
+            savedUser.getUsername(),
+            savedUser.getEmail(),
+            savedUser.getPhoneNumber()
         );
-        // kafkaProducerService.sendMessage("user-register-events",savedUser.getId().toString(), kafkaDTO);
-        return new LoginResponse(token, savedUser.getUsername(), savedUser.getId(), savedUser.getRole());
+        // kafkaProducerService.sendMessage("user-register-events", savedUser.getId().toString(), kafkaDTO);
+
+        return new LoginResponse(token, savedUser.getUsername(), savedUser.getId(), savedUser.getRole(),savedUser.getProfileImageUrl());
     }
 
+    // ---------------- Generate JWT ----------------
     private String generateToken(User user) {
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+
         return Jwts.builder()
             .setSubject(user.getUsername())
             .claim("userId", user.getId())
+            .claim("role", user.getRole().name())
             .setIssuedAt(new java.util.Date())
-            .setExpiration(new java.util.Date(System.currentTimeMillis() + 864000000)) // 10 days
-            .signWith(key)
+            .setExpiration(new java.util.Date(System.currentTimeMillis() + jwtExpiration))
+            .signWith(key, SignatureAlgorithm.HS256)
             .compact();
     }
 
+    // ---------------- Password Reset ----------------
     public void initiatePasswordReset(String email) throws UnsupportedEncodingException {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -125,34 +139,27 @@ public class AuthService {
         User user = userRepository.findByResetToken(token)
             .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
 
-        // Check if token is expired
-        if (user.getResetTokenExpiry() == null || 
-            user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Reset token has expired");
         }
 
-        // Update password and clear reset token
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setResetToken(null);
         user.setResetTokenExpiry(null);
-        // kafkaProducerService.sendMessage("user-password-reset-event", user.getId().toString(),user);
         userRepository.save(user);
     }
 
     public void changePassword(String currentPassword, String newPassword) {
-        // Get current authenticated user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Verify current password
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
 
-        // Update to new password
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }

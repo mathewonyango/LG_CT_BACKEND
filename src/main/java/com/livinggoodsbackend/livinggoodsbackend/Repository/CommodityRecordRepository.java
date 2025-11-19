@@ -142,4 +142,35 @@ public interface CommodityRecordRepository extends JpaRepository<CommodityRecord
     Integer getTotalStockByCommunityUnitId(@Param("communityUnitId") Long communityUnitId);
 
     List<CommodityRecord> findByChp_IdAndRecordDateBetween(Long chpId, LocalDateTime start, LocalDateTime end);
+
+
+    // Find CHP record for specific CHP and commodity
+    @Query("SELECT cr FROM CommodityRecord cr WHERE cr.chp.id = :chpId AND cr.commodity.id = :commodityId")
+    CommodityRecord findByChpIdAndCommodityId(@Param("chpId") Long chpId, @Param("commodityId") Long commodityId);
+
+
+
+@Query(value = """
+    SELECT COALESCE(SUM(c.quantity_to_order), 0)
+    FROM commodity_records c
+    WHERE c.chp_id = :chpId
+      AND c.commodity_id = :commodityId
+      AND EXTRACT(MONTH FROM c.record_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+      AND EXTRACT(YEAR FROM c.record_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+""", nativeQuery = true)
+Integer sumQuantityToOrderForCurrentMonth(@Param("chpId") Long chpId,
+                                          @Param("commodityId") Long commodityId);
+
+@Query(value = """
+    SELECT *
+    FROM commodity_records c
+    WHERE c.chp_id = :chpId
+      AND c.commodity_id = :commodityId
+      AND EXTRACT(MONTH FROM c.record_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+      AND EXTRACT(YEAR FROM c.record_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+""", nativeQuery = true)
+List<CommodityRecord> findAllForCurrentMonth(@Param("chpId") Long chpId,
+                                             @Param("commodityId") Long commodityId);
+
+
 }

@@ -33,6 +33,7 @@ import com.livinggoodsbackend.livinggoodsbackend.Model.ChaCuMapping;
 import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
 
+
 @Service
 
 public class CommodityRecordService {
@@ -56,7 +57,6 @@ public class CommodityRecordService {
 
     @Autowired
     private KafkaProducerService kafkaProducerService;
-    
 
     
   public List<CommodityRecordDTO> getAllRecords() {
@@ -134,17 +134,19 @@ public class CommodityRecordService {
     // Log stock change
     createStockHistoryEntry(saved, ChangeType.ADJUSTMENT);
 
+    return convertToDTO(saved);
+
     // Send Kafka message
     // kafkaProducerService.sendMessage(
     //     "commodity-records",
     //     String.valueOf(saved.getId()),
     //     saved
     // );
+    }
 
-    // Convert to DTO and return
-    return convertToDTO(saved);
-}
-
+public boolean isCommodityExists(Long commodityId) {
+        return commodityRepository.findById(commodityId).isPresent();
+    }
     
     public CommodityRecordDTO updateRecord(Long id, CommodityRecord recordDetails) {
         CommodityRecord record = commodityRecordRepository.findById(id)

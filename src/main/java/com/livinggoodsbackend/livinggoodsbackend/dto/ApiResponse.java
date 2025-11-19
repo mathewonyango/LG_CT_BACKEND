@@ -22,4 +22,5 @@ public class ApiResponse {
         this.data = data;
         this.timestamp = LocalDateTime.now();
     }
+    
 }

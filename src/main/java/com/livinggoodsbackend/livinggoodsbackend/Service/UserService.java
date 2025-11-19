@@ -1,5 +1,6 @@
 package com.livinggoodsbackend.livinggoodsbackend.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -16,11 +17,25 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import java.io.IOException;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.livinggoodsbackend.livinggoodsbackend.Model.ChaChpMapping;
 import com.livinggoodsbackend.livinggoodsbackend.Model.ChaCuMapping;
 import com.livinggoodsbackend.livinggoodsbackend.Model.ChpCuMapping;
@@ -52,7 +67,10 @@ import com.livinggoodsbackend.livinggoodsbackend.Repository.ChpCuMappingReposito
 import com.livinggoodsbackend.livinggoodsbackend.Repository.CommodityUnitRepository;
 import com.livinggoodsbackend.livinggoodsbackend.Service.KafkaProducerService;
 
+import com.livinggoodsbackend.livinggoodsbackend.dto.chatDTO.UserDto;
+
 import jakarta.transaction.Transactional;
+
 
 @Service
 @Transactional
@@ -86,20 +104,46 @@ public class UserService {
     @Autowired
     private final KafkaProducerService kafkaProducerService;
 
+    @Value("${cloudflare.images-url}")
+    private String cloudflareImagesUrl;
+
+    @Value("${cloudflare.api-token}")
+    private String apiToken;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
  
     public UserService(KafkaProducerService kafkaProducerService) {
         this.kafkaProducerService = kafkaProducerService;
     }
 
 
-    public List<User> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        for (User user : users) {
-            // kafkaProducerService.sendMessage("users", user.getId().toString(), user);
-        }
-        return users;
-    }
+    public List<UserDto> getAllUsers() {
+    List<User> users = userRepository.findAll();
+    
+    return users.stream()
+            .map(user -> new UserDto(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole()
+            ))
+            .collect(Collectors.toList());
+}
+//get users  except those with role chp role
 
+public List<UserDto> getAllUsersExceptChp() {
+    List<User> users = userRepository.findByRoleNot(Role.CHP);
+    
+    return users.stream()
+            .map(user -> new UserDto(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole()
+            ))
+            .collect(Collectors.toList());
+}
     
     public List<User> getManagers() {
         return userRepository.findByRole(Role.MANAGER);
@@ -476,5 +520,8 @@ public ChaDashboardResponseDTO computeChaDashboardFromChpIds(List<Long> chpIds, 
 
     return response;
 }
+
+
+
 
 }

@@ -3,24 +3,26 @@ package com.livinggoodsbackend.livinggoodsbackend.Model;
 import com.livinggoodsbackend.livinggoodsbackend.enums.Role;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 @Table(name = "users")
 public class User {
     @Id
@@ -65,5 +67,14 @@ public class User {
         }
         this.role = role;
     }
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
+      
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private UserOnlineStatus onlineStatus;
+
+  
 
 }
+

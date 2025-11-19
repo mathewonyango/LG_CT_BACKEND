@@ -13,4 +13,5 @@ public class LoginResponse {
     private String username;
     private Long userId;
     private Role role;
+    private String profileImageUrl; // Add this field
 }

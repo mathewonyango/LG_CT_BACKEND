@@ -16,10 +16,11 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
+                .openapi("3.0.0") // Explicitly set OpenAPI version
                 .info(new Info()
                         .title("Living Goods Commodity Tracker API")
-                        .version("1.0")
-                        .description("This API provides endpoints for managing commodities, users, and tracking resources")
+                        .version("1.0.0")
+                        .description("API for managing commodities, users, and tracking resources")
                         .termsOfService("http://livinggoods.com/terms")
                         .contact(new Contact()
                                 .name("Living Goods Support")
@@ -28,12 +29,12 @@ public class OpenApiConfig {
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("http://www.apache.org/licenses/LICENSE-2.0.html")))
-                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components()
-                        .addSecuritySchemes("Bearer Authentication", new SecurityScheme()
+                        .addSecuritySchemes("bearerAuth", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("Enter JWT token")));
+                                .description("Enter JWT token here")));
     }
 }
